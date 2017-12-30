@@ -14,16 +14,7 @@ var HierarchyController = (function () {
         this.display();
     };
     HierarchyController.prototype.collapseNode = function (nodeId) {
-        console.log("here");
-        var hierarchyRoot = this.hierarchyModel.hierarchyTree.hierarchyRoot;
-        var nodeToCollapse = this.hierarchyModel.findNode(nodeId);
-        nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
-        if (nodeToCollapse.collapsed) {
-            this.hierarchyModel.hideChildren(nodeToCollapse);
-        }
-        else {
-            this.hierarchyModel.showChildren(nodeToCollapse);
-        }
+        this.hierarchyModel.collapseNode(nodeId);
         this.display();
     };
     return HierarchyController;
@@ -44,16 +35,22 @@ var HierarchyModel = (function () {
     };
     HierarchyModel.prototype.showChildren = function (nodeId) {
         var hierarchyTree = this.hierarchyTree;
-        hierarchyTree.showChildren(nodeId);
+        var node = this.findNode(nodeId);
+        hierarchyTree.showChildren(node);
     };
     HierarchyModel.prototype.hideChildren = function (nodeId) {
         var hierarchyTree = this.hierarchyTree;
-        hierarchyTree.hideChildren(nodeId);
+        var node = this.findNode(nodeId);
+        hierarchyTree.hideChildren(node);
     };
     HierarchyModel.prototype.findNode = function (nodeId) {
         var hierarchyTree = this.hierarchyTree;
         var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeId);
         return node;
+    };
+    HierarchyModel.prototype.collapseNode = function (nodeId) {
+        var hierarchyTree = this.hierarchyTree;
+        hierarchyTree.collapseNode(nodeId);
     };
     return HierarchyModel;
 }());
@@ -180,6 +177,16 @@ var HierarchyTree = (function () {
                 }
             }
             return resultNode;
+        }
+    };
+    HierarchyTree.prototype.collapseNode = function (nodeId) {
+        var nodeToCollapse = this.findNode(this.hierarchyRoot, nodeId);
+        nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
+        if (nodeToCollapse.collapsed) {
+            this.hideChildren(nodeToCollapse);
+        }
+        else {
+            this.showChildren(nodeToCollapse);
         }
     };
     return HierarchyTree;

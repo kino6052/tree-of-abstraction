@@ -16,14 +16,7 @@ class HierarchyController {
         this.display();
     }
     collapseNode(nodeId:String){
-        let hierarchyRoot = this.hierarchyModel.hierarchyTree.hierarchyRoot;
-        let nodeToCollapse = this.hierarchyModel.findNode(nodeId);
-        nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
-        if (nodeToCollapse.collapsed){
-            this.hierarchyModel.hideChildren(nodeToCollapse);
-        } else {
-            this.hierarchyModel.showChildren(nodeToCollapse);
-        }
+        this.hierarchyModel.collapseNode(nodeId);
         this.display();
     }
 }
@@ -45,16 +38,22 @@ class HierarchyModel {
     }
     showChildren(nodeId:String){
         let hierarchyTree = this.hierarchyTree;
-        hierarchyTree.showChildren(nodeId);
+        let node = this.findNode(nodeId);
+        hierarchyTree.showChildren(node);
     }
     hideChildren(nodeId:String){
         let hierarchyTree = this.hierarchyTree;
-        hierarchyTree.hideChildren(nodeId);
+        let node = this.findNode(nodeId);
+        hierarchyTree.hideChildren(node);
     }
     findNode(nodeId:String){
         let hierarchyTree = this.hierarchyTree;
         let node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeId);
         return node;
+    }
+    collapseNode(nodeId:String){
+        let hierarchyTree = this.hierarchyTree;
+        hierarchyTree.collapseNode(nodeId);   
     }
 }
 
@@ -64,6 +63,7 @@ class HierarchyView {
     constructor(hierarchyWindow: Object){
         this.hierarchyWindow = hierarchyWindow;
     }
+    
     displayHierarchyTreeHTML(hierarchyModel:HierarchyModel){
         let result = "";
         let previousIndentAmount = 0;
@@ -84,6 +84,7 @@ class HierarchyView {
         );
         return "<ul>" + result + "</ul>";
     }
+    
     displayNodeHTML(node: HierarchyNode){
         if (node.visible){
             return "<li><div class='node' id='"+node.name+"' style='width: 100%; height: 50px; border: 1px dashed black;'>" + node.name + " <span class='collapse'>x</span></div></li>";    
@@ -91,9 +92,11 @@ class HierarchyView {
             return "";
         }
     }
+    
     display(hierarchyModel: HierarchyModel){
         this.hierarchyWindow.html(this.displayHierarchyTreeHTML(hierarchyModel));
     }
+    
     initLogic(hierarchyController: HierarchyController){
         $(".node .collapse").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parent(".node")[0].id;
@@ -174,7 +177,7 @@ class HierarchyTree {
         }
     }
     
-    findNode(currentNode: HierarchyNode, nodeId: string){
+    findNode(currentNode: HierarchyNode, nodeId: String){
         if (currentNode.name === nodeId) {
             return currentNode;
         } else {
@@ -186,6 +189,16 @@ class HierarchyTree {
                 }
             }
             return resultNode;
+        }
+    }
+    
+    collapseNode(nodeId: String){
+        let nodeToCollapse = this.findNode(this.hierarchyRoot, nodeId);
+        nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
+        if (nodeToCollapse.collapsed){
+            this.hideChildren(nodeToCollapse);
+        } else {
+            this.showChildren(nodeToCollapse);
         }
     }
 }
@@ -202,10 +215,6 @@ class HierarchyNode {
         this.collapsed = collapsed;
     }
 }
-
-let hierarchyModel = new HierarchyModel(hierarchyTree);
-let hierarchyView = new HierarchyView($("#div001"));
-let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
 
 let hierarchyTree = new HierarchyTree(
     {
@@ -235,3 +244,7 @@ let hierarchyTree = new HierarchyTree(
         ]
     }
 )
+
+let hierarchyModel = new HierarchyModel(hierarchyTree);
+let hierarchyView = new HierarchyView($("#div001"));
+let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
