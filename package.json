@@ -18,5 +18,8 @@
   "homepage": "https://github.com/kino6052/tree-of-abstraction#readme",
   "dependencies": {
     "express": "^4.16.2"
+  },
+  "devDependencies": {
+    "@types/jquery": "^3.2.17"
   }
 }

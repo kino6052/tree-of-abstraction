@@ -1,0 +1,23 @@
+{
+  "name": "tree-of-abstraction",
+  "description": "Auxilary tool for learning and organization",
+  "main": "index.js",
+  "authors": [
+    "Kirill A. Novik"
+  ],
+  "license": "ISC",
+  "homepage": "https://github.com/kino6052/tree-of-abstraction",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery-ts": "^2.1.1",
+    "jquery": "^3.2.1",
+    "typescript": "^2.6.2"
+  }
+}
