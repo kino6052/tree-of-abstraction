@@ -50,9 +50,36 @@ class HierarchyView {
 
 class HierarchyTree {
     hierarchyRoot: HierarchyNode
-    constructor(hierarchyRoot: HierarchyNode){
-        this.hierarchyRoot = hierarchyRoot;
+    constructor(hierarchy: Object){
+        if (hierarchy.hasOwnProperty("name")){
+            this.hierarchyRoot = this.buildHierarchyFromObject(hierarchy, new HierarchyNode(hierarchy.name, []));
+        } else {
+            return;
+        }
     }
+    
+    buildHierarchyFromObject(hierarchy: Object, currentNode: HierarchyNode){
+        console.log(hierarchy);
+        let childNode = null;
+        if (hierarchy.hasOwnProperty("name")){
+            currentNode.name = hierarchy.name;
+        } else {
+            return null;
+        }
+        if (hierarchy.hasOwnProperty("children")){
+            for (let child in hierarchy.children){
+                childNode = this.buildHierarchyFromObject(
+                    hierarchy.children[child], 
+                    new HierarchyNode("",[])
+                )
+                if (childNode){
+                    currentNode.children.push(childNode);
+                }
+            }
+        }
+        return currentNode;
+    }
+    
     iterate(currentNode: HierarchyNode, callback: Function){
         if (currentNode){
             callback(currentNode);
@@ -75,8 +102,21 @@ class HierarchyNode {
     }
 }
 
-let node001 = new HierarchyNode("node001", []);
-let hierarchyTree = new HierarchyTree(node001)
+let hierarchyTree = new HierarchyTree(
+    {
+        name: "node001",
+        children: [
+            {
+                name: "node002",
+                children: []
+            },
+            {
+                name: "node003",
+                children: []
+            }
+        ]
+    }
+)
 
 let hierarchyModel = new HierarchyModel(hierarchyTree);
 let hierarchyView = new HierarchyView($("#div001"));

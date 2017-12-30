@@ -42,9 +42,33 @@ var HierarchyView = (function () {
     return HierarchyView;
 }());
 var HierarchyTree = (function () {
-    function HierarchyTree(hierarchyRoot) {
-        this.hierarchyRoot = hierarchyRoot;
+    function HierarchyTree(hierarchy) {
+        if (hierarchy.hasOwnProperty("name")) {
+            this.hierarchyRoot = this.buildHierarchyFromObject(hierarchy, new HierarchyNode(hierarchy.name, []));
+        }
+        else {
+            return;
+        }
     }
+    HierarchyTree.prototype.buildHierarchyFromObject = function (hierarchy, currentNode) {
+        console.log(hierarchy);
+        var childNode = null;
+        if (hierarchy.hasOwnProperty("name")) {
+            currentNode.name = hierarchy.name;
+        }
+        else {
+            return null;
+        }
+        if (hierarchy.hasOwnProperty("children")) {
+            for (var child in hierarchy.children) {
+                childNode = this.buildHierarchyFromObject(hierarchy.children[child], new HierarchyNode("", []));
+                if (childNode) {
+                    currentNode.children.push(childNode);
+                }
+            }
+        }
+        return currentNode;
+    };
     HierarchyTree.prototype.iterate = function (currentNode, callback) {
         if (currentNode) {
             callback(currentNode);
@@ -66,8 +90,23 @@ var HierarchyNode = (function () {
     }
     return HierarchyNode;
 }());
-var node001 = new HierarchyNode("node001", []);
-var hierarchyTree = new HierarchyTree(node001);
+var node001 = new HierarchyNode("node001", [
+    new HierarchyNode("node002", []),
+    new HierarchyNode("node003", [])
+]);
+var hierarchyTree = new HierarchyTree({
+    name: "node001",
+    children: [
+        {
+            name: "node002",
+            children: []
+        },
+        {
+            name: "node003",
+            children: []
+        }
+    ]
+});
 var hierarchyModel = new HierarchyModel(hierarchyTree);
 var hierarchyView = new HierarchyView($("#div001"));
 var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
