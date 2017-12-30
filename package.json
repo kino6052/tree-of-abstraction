@@ -1,0 +1,22 @@
+{
+  "name": "tree-of-abstraction",
+  "version": "1.0.0",
+  "description": "Auxilary tool for learning and organization",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kino6052/tree-of-abstraction.git"
+  },
+  "author": "Kirill A. Novik",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kino6052/tree-of-abstraction/issues"
+  },
+  "homepage": "https://github.com/kino6052/tree-of-abstraction#readme",
+  "dependencies": {
+    "express": "^4.16.2"
+  }
+}
