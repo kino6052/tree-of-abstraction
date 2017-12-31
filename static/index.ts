@@ -131,7 +131,16 @@ class HierarchyView {
     
     displayNodeHTML(node: HierarchyNode){
         if (node.visible){
-            return "<li><div class='node' id='"+toLowerSerpent(node.name)+"' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";    
+            return ""                                                                                   +
+            "<li>"                                                                                      +
+                "<div class='node' id='"+toLowerSerpent(node.name)+"' style='font-weight: bold;'>"      + 
+                    node.name                                                                           + 
+                "</div>"                                                                                +
+                "<span class='collapse'> collapse </span>|"                                             + 
+                "<span class='edit'> edit </span>|"                                                     + 
+                "<span class='add'> add </span>|"                                                       + 
+                "<span class='remove'> remove </span>"                                                  + 
+            "</li>"
         } else {
             return "";
         }
@@ -335,7 +344,45 @@ let hierarchyView = new HierarchyView($("#div001"));
 let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
 
 // Node Unit Tests
-exports.toLowerSerpentTest = function(test) {
+exports.MODEL_JsonToTreeTest = function(test) {
+    let hierarchyTree = new HierarchyTree({
+        name: "node001",
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyNode = new HierarchyNode("node001", []);
+    test.deepEqual(hierarchyTree.hierarchyRoot, hierarchyNode);
+    test.done();
+};
+
+exports.VIEW_JsonToDOMTreeTest = function(test) {
+    let hierarchyTree = new HierarchyTree({
+        name: "node001",
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let html = "";
+    let hierarchyNode = new HierarchyNode("node001", []);
+    let hierarchyModel = new HierarchyModel(hierarchyTree);
+    let hierarchyView = new HierarchyView($());
+    html = "<ul>"                                                                   +
+                "<li>"                                                              +
+                    "<div class='node' id='node001' style='font-weight: bold;'>"    + 
+                        "node001"                                                   + 
+                    "</div>"                                                        +
+                    "<span class='collapse'> collapse </span>|"                     + 
+                    "<span class='edit'> edit </span>|"                             + 
+                    "<span class='add'> add </span>|"                               + 
+                    "<span class='remove'> remove </span>"                          + 
+                "</li>"                                                             +  
+            "</ul>";
+    test.equals(html, hierarchyView.displayHierarchyTreeHTML(hierarchyModel));
+    test.done();
+};
+
+exports.AUX_ToLowerSerpentTest = function(test) {
     let input;
     let result;
     input = "Test Test Test";
@@ -343,5 +390,8 @@ exports.toLowerSerpentTest = function(test) {
     input = "ChChEcK-Test";
     result = toLowerSerpent(input);
     test.equals("chcheck-test", result);
+    input = "c  c  c";
+    result = toLowerSerpent(input);
+    test.equals("c--c--c", result); // Should It Be Like This?
     test.done();
 };
