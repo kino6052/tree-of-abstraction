@@ -1,3 +1,13 @@
+var $ = $ || function () {
+    return {
+        html: function () {
+            return;
+        },
+        on: function () {
+            return;
+        }
+    };
+};
 var toLowerSerpent = function (input) {
     return input.toLowerCase().split(" ").join("-");
 };
@@ -302,3 +312,13 @@ var hierarchyTree = new HierarchyTree({
 var hierarchyModel = new HierarchyModel(hierarchyTree);
 var hierarchyView = new HierarchyView($("#div001"));
 var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+exports.toLowerSerpentTest = function (test) {
+    var input;
+    var result;
+    input = "Test Test Test";
+    result = toLowerSerpent(input);
+    input = "ChChEcK-Test";
+    result = toLowerSerpent(input);
+    test.equals("chchecktest", result);
+    test.done();
+};

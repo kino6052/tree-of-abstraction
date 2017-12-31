@@ -1,3 +1,14 @@
+let $ = $ || function(){
+    return {
+        html: function(){
+            return;
+        },
+        on: function(){
+            return;
+        }
+    }
+};
+
 let toLowerSerpent = function(input: String){
     return input.toLowerCase().split(" ").join("-");
 }
@@ -322,3 +333,15 @@ let hierarchyTree = new HierarchyTree(
 let hierarchyModel = new HierarchyModel(hierarchyTree);
 let hierarchyView = new HierarchyView($("#div001"));
 let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+
+// Node Unit Tests
+exports.toLowerSerpentTest = function(test) {
+    let input;
+    let result;
+    input = "Test Test Test";
+    result = toLowerSerpent(input);
+    input = "ChChEcK-Test";
+    result = toLowerSerpent(input);
+    test.equals("chcheck-test", result);
+    test.done();
+};
