@@ -70,7 +70,8 @@ var HierarchyModel = (function () {
     HierarchyModel.prototype.add = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
         var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
-        node.children.push(new HierarchyNode("newNode", [], true, false));
+        node.children.unshift(new HierarchyNode(Date.now().toString(), [], true, false));
+        console.log(hierarchyTree);
     };
     HierarchyModel.prototype.remove = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
@@ -89,10 +90,14 @@ var HierarchyView = (function () {
         var hierarchyTree = hierarchyModel.getHierarchyTreeAsObject();
         hierarchyTree.iterate(hierarchyTree.hierarchyRoot, function (node, indentAmount) {
             if (indentAmount > previousIndentAmount) {
-                result += "<ul>";
+                for (var i = 0; i < indentAmount - previousIndentAmount; i++) {
+                    result += "<ul>";
+                }
             }
             else if (indentAmount < previousIndentAmount) {
-                result += "</ul>";
+                for (var i = 0; i < previousIndentAmount - indentAmount; i++) {
+                    result += "</ul>";
+                }
             }
             previousIndentAmount = indentAmount;
             result += _this.displayNodeHTML(node);
@@ -101,7 +106,7 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.displayNodeHTML = function (node) {
         if (node.visible) {
-            return "<li><div class='node' id='" + node.name + "' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";
+            return "<li><div class='node' id='" + node.name.toLowerCase().replace(" ", "-") + "' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";
         }
         else {
             return "";
@@ -130,7 +135,7 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.edit = function (nodeName, hierarchyController) {
         var node = $(".node#" + nodeName);
-        $("#" + nodeName).html("<input placeholder='" + nodeName + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
+        $("#" + nodeName).html("<input placeholder='" + node.text() + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
         node.find(".cancel").on("click", function () {
             hierarchyController.display();
         });
@@ -212,7 +217,10 @@ var HierarchyTree = (function () {
         }
     };
     HierarchyTree.prototype.findNode = function (currentNode, nodeName) {
-        if (currentNode.name === nodeName) {
+        var toLowerSerpent = function (input) {
+            return input.toLowerCase().replace(" ", "-");
+        };
+        if (toLowerSerpent(currentNode.name) === toLowerSerpent(nodeName)) {
             return currentNode;
         }
         else {
@@ -220,7 +228,7 @@ var HierarchyTree = (function () {
             for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
                 var childNode = _a[_i];
                 resultNode = this.findNode(childNode, nodeName);
-                if (resultNode && resultNode.name === nodeName) {
+                if (resultNode && toLowerSerpent(resultNode.name) === toLowerSerpent(nodeName)) {
                     return resultNode;
                 }
             }

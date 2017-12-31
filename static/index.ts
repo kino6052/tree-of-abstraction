@@ -73,7 +73,8 @@ class HierarchyModel {
     add(nodeName:String){
         let hierarchyTree = this.hierarchyTree;
         let node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
-        node.children.push(new HierarchyNode("newNode", [], true, false));
+        node.children.unshift(new HierarchyNode(Date.now().toString(), [], true, false));
+        console.log(hierarchyTree);
     }
     remove(nodeName:String){
         let hierarchyTree = this.hierarchyTree;
@@ -96,10 +97,14 @@ class HierarchyView {
             hierarchyTree.hierarchyRoot, 
             (node: HierarchyNode, indentAmount: Number) => {
                 if (indentAmount > previousIndentAmount){
-                    result += "<ul>";
+                    for (let i = 0; i < indentAmount - previousIndentAmount; i++){ 
+                        result += "<ul>";
+                    }
                 } else 
                 if (indentAmount < previousIndentAmount){
-                    result += "</ul>";
+                    for (let i = 0; i < previousIndentAmount - indentAmount; i++){ // UL tags must match indentation levels
+                        result += "</ul>";
+                    }
                 }
                 previousIndentAmount = indentAmount;
                 result += this.displayNodeHTML(node);
@@ -111,7 +116,7 @@ class HierarchyView {
     
     displayNodeHTML(node: HierarchyNode){
         if (node.visible){
-            return "<li><div class='node' id='"+node.name+"' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";    
+            return "<li><div class='node' id='"+node.name.toLowerCase().replace(" ", "-")+"' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";    
         } else {
             return "";
         }
@@ -142,7 +147,7 @@ class HierarchyView {
     
     edit(nodeName: String, hierarchyController: HierarchyController){
         let node = $(".node#" + nodeName);
-        $("#" + nodeName).html("<input placeholder='" + nodeName + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
+        $("#" + nodeName).html("<input placeholder='" + node.text() + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
         node.find(".cancel").on("click", ()=>{
             hierarchyController.display();
         });
@@ -227,13 +232,16 @@ class HierarchyTree {
     }
     
     findNode(currentNode: HierarchyNode, nodeName: String){
-        if (currentNode.name === nodeName) {
+        let toLowerSerpent = function(input: String){
+            return input.toLowerCase().replace(" ", "-")
+        }
+        if (toLowerSerpent(currentNode.name) === toLowerSerpent(nodeName)) {
             return currentNode;
         } else {
             let resultNode = null;
             for (let childNode of currentNode.children){
                 resultNode = this.findNode(childNode, nodeName);
-                if (resultNode && resultNode.name === nodeName){
+                if (resultNode && toLowerSerpent(resultNode.name) === toLowerSerpent(nodeName)){
                     return resultNode;
                 }
             }
