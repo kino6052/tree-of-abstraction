@@ -228,7 +228,7 @@ class HierarchyTree {
     
     showChildren(parent: HierarchyNode){
         for (let childNode of parent.children){
-            if (!parent.collapsed) {
+            if (!parent.collapsed && parent.visible) {
                 childNode.visible = true;
             }
             this.showChildren(childNode);

@@ -73,7 +73,7 @@ var HierarchyModel = (function () {
     HierarchyModel.prototype.add = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
         var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
-        node.children.unshift(new HierarchyNode(Date.now().toString(), [], true, false));
+        node.children.unshift(new HierarchyNode(Date.now().toString(), []));
         console.log(hierarchyTree);
     };
     HierarchyModel.prototype.remove = function (nodeName) {
@@ -213,7 +213,7 @@ var HierarchyTree = (function () {
     HierarchyTree.prototype.showChildren = function (parent) {
         for (var _i = 0, _a = parent.children; _i < _a.length; _i++) {
             var childNode = _a[_i];
-            if (!parent.collapsed) {
+            if (!parent.collapsed && parent.visible) {
                 childNode.visible = true;
             }
             this.showChildren(childNode);
@@ -265,11 +265,11 @@ var HierarchyTree = (function () {
     return HierarchyTree;
 }());
 var HierarchyNode = (function () {
-    function HierarchyNode(name, children, visible, collapsed) {
+    function HierarchyNode(name, children) {
         this.name = name;
         this.children = children;
-        this.visible = visible;
-        this.collapsed = collapsed;
+        this.visible = true;
+        this.collapsed = false;
     }
     return HierarchyNode;
 }());
