@@ -85,11 +85,10 @@ class HierarchyModel {
         let node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
         node.name = newNodeName;
     }
-    add(nodeName:String){
+    add(newNode:HierarchyNode, nodeName:String){
         let hierarchyTree = this.hierarchyTree;
         let node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
-        node.children.unshift(new HierarchyNode(Date.now().toString(), []));
-        console.log(hierarchyTree);
+        node.children.unshift(newNode);
     }
     remove(nodeName:String){
         let hierarchyTree = this.hierarchyTree;
@@ -112,20 +111,25 @@ class HierarchyView {
             hierarchyTree.hierarchyRoot, 
             (node: HierarchyNode, indentAmount: Number) => {
                 if (indentAmount > previousIndentAmount){
-                    for (let i = 0; i < indentAmount - previousIndentAmount; i++){ 
+                    // for (let i = 0; i < indentAmount - previousIndentAmount; i++){ 
                         result += "<ul>";
-                    }
+                    // }
                 } else 
                 if (indentAmount < previousIndentAmount){
-                    for (let i = 0; i < previousIndentAmount - indentAmount; i++){ // UL tags must match indentation levels
+                    // for (let i = 0; i < previousIndentAmount - indentAmount; i++){ // UL tags must match indentation levels
                         result += "</ul>";
-                    }
+                    // }
                 }
                 previousIndentAmount = indentAmount;
                 result += this.displayNodeHTML(node);
             },
             previousIndentAmount
         );
+        if (previousIndentAmount > 0) {
+            for (let i = 0; i < previousIndentAmount; i++){
+                result += "</ul>";
+            }
+        } 
         return "<ul>" + result + "</ul>";
     }
     
@@ -364,9 +368,8 @@ exports.VIEW_JsonToDOMTreeTest = function(test) {
         children: []
     });
     let html = "";
-    let hierarchyNode = new HierarchyNode("node001", []);
-    let hierarchyModel = new HierarchyModel(hierarchyTree);
     let hierarchyView = new HierarchyView($());
+    let hierarchyModel = new HierarchyModel(hierarchyTree);
     html = "<ul>"                                                                   +
                 "<li>"                                                              +
                     "<div class='node' id='node001' style='font-weight: bold;'>"    + 
@@ -377,6 +380,109 @@ exports.VIEW_JsonToDOMTreeTest = function(test) {
                     "<span class='add'> add </span>|"                               + 
                     "<span class='remove'> remove </span>"                          + 
                 "</li>"                                                             +  
+            "</ul>";
+    test.equals(html, hierarchyView.displayHierarchyTreeHTML(hierarchyModel));
+    hierarchyModel.add(new HierarchyNode("node002", []), "node001");
+    html = "<ul>"                                                                       +
+                "<li>"                                                                  +
+                    "<div class='node' id='node001' style='font-weight: bold;'>"        + 
+                        "node001"                                                       + 
+                    "</div>"                                                            +
+                    "<span class='collapse'> collapse </span>|"                         + 
+                    "<span class='edit'> edit </span>|"                                 + 
+                    "<span class='add'> add </span>|"                                   + 
+                    "<span class='remove'> remove </span>"                              + 
+                "</li>"                                                                 +     
+                "<ul>"                                                                  +
+                    "<li>"                                                              +
+                        "<div class='node' id='node002' style='font-weight: bold;'>"    + 
+                            "node002"                                                   + 
+                        "</div>"                                                        +
+                        "<span class='collapse'> collapse </span>|"                     + 
+                        "<span class='edit'> edit </span>|"                             + 
+                        "<span class='add'> add </span>|"                               + 
+                        "<span class='remove'> remove </span>"                          + 
+                    "</li>"                                                             +  
+                "</ul>"                                                                 +
+            "</ul>";
+    test.equals(html, hierarchyView.displayHierarchyTreeHTML(hierarchyModel));
+    hierarchyModel.add(new HierarchyNode("node003", []), "node002");
+    html = "<ul>"                                                                           +
+                "<li>"                                                                      +
+                    "<div class='node' id='node001' style='font-weight: bold;'>"            + 
+                        "node001"                                                           + 
+                    "</div>"                                                                +
+                    "<span class='collapse'> collapse </span>|"                             + 
+                    "<span class='edit'> edit </span>|"                                     + 
+                    "<span class='add'> add </span>|"                                       + 
+                    "<span class='remove'> remove </span>"                                  + 
+                "</li>"                                                                     +     
+                "<ul>"                                                                      +
+                    "<li>"                                                                  +
+                        "<div class='node' id='node002' style='font-weight: bold;'>"        + 
+                            "node002"                                                       + 
+                        "</div>"                                                            +
+                        "<span class='collapse'> collapse </span>|"                         + 
+                        "<span class='edit'> edit </span>|"                                 + 
+                        "<span class='add'> add </span>|"                                   + 
+                        "<span class='remove'> remove </span>"                              + 
+                    "</li>"                                                                 +  
+                    "<ul>"                                                                  +
+                        "<li>"                                                              +
+                            "<div class='node' id='node003' style='font-weight: bold;'>"    + 
+                                "node003"                                                   + 
+                            "</div>"                                                        +
+                            "<span class='collapse'> collapse </span>|"                     + 
+                            "<span class='edit'> edit </span>|"                             + 
+                            "<span class='add'> add </span>|"                               + 
+                            "<span class='remove'> remove </span>"                          + 
+                        "</li>"                                                             +  
+                    "</ul>"                                                                 +
+                "</ul>"                                                                     +
+            "</ul>";
+    test.equals(html, hierarchyView.displayHierarchyTreeHTML(hierarchyModel));
+    hierarchyModel.add(new HierarchyNode("node004", []), "node001");
+    html = "<ul>"                                                                           +
+                "<li>"                                                                      +
+                    "<div class='node' id='node001' style='font-weight: bold;'>"            + 
+                        "node001"                                                           + 
+                    "</div>"                                                                +
+                    "<span class='collapse'> collapse </span>|"                             + 
+                    "<span class='edit'> edit </span>|"                                     + 
+                    "<span class='add'> add </span>|"                                       + 
+                    "<span class='remove'> remove </span>"                                  + 
+                "</li>"                                                                     +     
+                "<ul>"                                                                      +
+                    "<li>"                                                                  +
+                        "<div class='node' id='node004' style='font-weight: bold;'>"        + 
+                            "node004"                                                       + 
+                        "</div>"                                                            +
+                        "<span class='collapse'> collapse </span>|"                         + 
+                        "<span class='edit'> edit </span>|"                                 + 
+                        "<span class='add'> add </span>|"                                   + 
+                        "<span class='remove'> remove </span>"                              + 
+                    "</li>"                                                                 +
+                    "<li>"                                                                  +
+                        "<div class='node' id='node002' style='font-weight: bold;'>"        + 
+                            "node002"                                                       + 
+                        "</div>"                                                            +
+                        "<span class='collapse'> collapse </span>|"                         + 
+                        "<span class='edit'> edit </span>|"                                 + 
+                        "<span class='add'> add </span>|"                                   + 
+                        "<span class='remove'> remove </span>"                              + 
+                    "</li>"                                                                 +  
+                    "<ul>"                                                                  +
+                        "<li>"                                                              +
+                            "<div class='node' id='node003' style='font-weight: bold;'>"    + 
+                                "node003"                                                   + 
+                            "</div>"                                                        +
+                            "<span class='collapse'> collapse </span>|"                     + 
+                            "<span class='edit'> edit </span>|"                             + 
+                            "<span class='add'> add </span>|"                               + 
+                            "<span class='remove'> remove </span>"                          + 
+                        "</li>"                                                             +  
+                    "</ul>"                                                                 +
+                "</ul>"                                                                     +
             "</ul>";
     test.equals(html, hierarchyView.displayHierarchyTreeHTML(hierarchyModel));
     test.done();
