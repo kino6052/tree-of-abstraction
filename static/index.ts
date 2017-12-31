@@ -1,3 +1,7 @@
+let toLowerSerpent = function(input: String){
+    return input.toLowerCase().split(" ").join("-");
+}
+
 class HierarchyController {
     hierarchyModel: HierarchyModel
     hierarchyView: HierarchyView
@@ -73,7 +77,7 @@ class HierarchyModel {
     add(nodeName:String){
         let hierarchyTree = this.hierarchyTree;
         let node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
-        node.children.unshift(new HierarchyNode(Date.now().toString(), [], true, false));
+        node.children.unshift(new HierarchyNode(Date.now().toString(), []));
         console.log(hierarchyTree);
     }
     remove(nodeName:String){
@@ -116,7 +120,7 @@ class HierarchyView {
     
     displayNodeHTML(node: HierarchyNode){
         if (node.visible){
-            return "<li><div class='node' id='"+node.name.toLowerCase().replace(" ", "-")+"' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";    
+            return "<li><div class='node' id='"+toLowerSerpent(node.name)+"' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";    
         } else {
             return "";
         }
@@ -232,9 +236,6 @@ class HierarchyTree {
     }
     
     findNode(currentNode: HierarchyNode, nodeName: String){
-        let toLowerSerpent = function(input: String){
-            return input.toLowerCase().replace(" ", "-")
-        }
         if (toLowerSerpent(currentNode.name) === toLowerSerpent(nodeName)) {
             return currentNode;
         } else {
@@ -281,11 +282,11 @@ class HierarchyNode {
     visible: Boolean
     children: Array<HierarchyNode>
     collapsed: Boolean
-    constructor(name: string, children: Array<HierarchyNode>, visible: Boolean, collapsed: Boolean){
+    constructor(name: string, children: Array<HierarchyNode>){
         this.name = name;
         this.children = children;
-        this.visible = visible;
-        this.collapsed = collapsed;
+        this.visible = true;
+        this.collapsed = false;
     }
 }
 

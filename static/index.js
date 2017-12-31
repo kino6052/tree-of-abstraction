@@ -1,3 +1,6 @@
+var toLowerSerpent = function (input) {
+    return input.toLowerCase().split(" ").join("-");
+};
 var HierarchyController = (function () {
     function HierarchyController(hierarchyModel, hierarchyView) {
         this.hierarchyModel = hierarchyModel;
@@ -106,7 +109,7 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.displayNodeHTML = function (node) {
         if (node.visible) {
-            return "<li><div class='node' id='" + node.name.toLowerCase().replace(" ", "-") + "' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";
+            return "<li><div class='node' id='" + toLowerSerpent(node.name) + "' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";
         }
         else {
             return "";
@@ -217,9 +220,6 @@ var HierarchyTree = (function () {
         }
     };
     HierarchyTree.prototype.findNode = function (currentNode, nodeName) {
-        var toLowerSerpent = function (input) {
-            return input.toLowerCase().replace(" ", "-");
-        };
         if (toLowerSerpent(currentNode.name) === toLowerSerpent(nodeName)) {
             return currentNode;
         }
