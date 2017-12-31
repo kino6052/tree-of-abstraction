@@ -21,6 +21,14 @@ class HierarchyController {
         this.hierarchyModel.updateNodeName(nodeName, newNodeName);
         this.display();
     }
+    add(nodeName:String){
+        this.hierarchyModel.add(nodeName:String);
+        this.display();
+    }
+    remove(nodeName:String){
+        this.hierarchyModel.remove(nodeName:String);
+        this.display();
+    }
 }
 
 class HierarchyModel {
@@ -62,6 +70,15 @@ class HierarchyModel {
         let node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
         node.name = newNodeName;
     }
+    add(nodeName:String){
+        let hierarchyTree = this.hierarchyTree;
+        let node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
+        node.children.push(new HierarchyNode("newNode", [], true, false));
+    }
+    remove(nodeName:String){
+        let hierarchyTree = this.hierarchyTree;
+        let node = hierarchyTree.removeNode(hierarchyTree.hierarchyRoot, nodeName);
+    }
 }
 
 class HierarchyView {
@@ -94,7 +111,7 @@ class HierarchyView {
     
     displayNodeHTML(node: HierarchyNode){
         if (node.visible){
-            return "<li><div class='node' id='"+node.name+"' style='width: 100%; height: 50px; border: 1px dashed black;'>" + node.name + "<span class='collapse'> collapse </span>|<span class='edit'> edit </span></div></li>";    
+            return "<li><div class='node' id='"+node.name+"' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";    
         } else {
             return "";
         }
@@ -105,19 +122,27 @@ class HierarchyView {
     }
     
     initLogic(hierarchyController: HierarchyController){
-        $(".node .collapse").on("click", (e)=>{
-            let nodeName = $(e.currentTarget).parent(".node")[0].id;
+        $(".collapse").on("click", (e)=>{
+            let nodeName = $(e.currentTarget).siblings(".node")[0].id;
             hierarchyController.collapseNode(nodeName);
         })
-        $(".node .edit").on("click", (e)=>{
-            let nodeName = $(e.currentTarget).parent(".node")[0].id;
+        $(".edit").on("click", (e)=>{
+            let nodeName = $(e.currentTarget).siblings(".node")[0].id;
             hierarchyController.edit(nodeName);
+        })
+        $(".add").on("click", (e)=>{
+            let nodeName = $(e.currentTarget).siblings(".node")[0].id;
+            hierarchyController.add(nodeName);
+        })
+        $(".remove").on("click", (e)=>{
+            let nodeName = $(e.currentTarget).siblings(".node")[0].id;
+            hierarchyController.remove(nodeName);
         })
     }
     
     edit(nodeName: String, hierarchyController: HierarchyController){
         let node = $(".node#" + nodeName);
-        $(".node#" + nodeName).html("<input placeholder='" + nodeName + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
+        $("#" + nodeName).html("<input placeholder='" + nodeName + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
         node.find(".cancel").on("click", ()=>{
             hierarchyController.display();
         });
@@ -210,6 +235,22 @@ class HierarchyTree {
                 resultNode = this.findNode(childNode, nodeName);
                 if (resultNode && resultNode.name === nodeName){
                     return resultNode;
+                }
+            }
+            return resultNode;
+        }
+    }
+    
+    removeNode(currentNode: HierarchyNode, nodeName: String){
+        if (currentNode.name === nodeName) {
+            return currentNode;
+        } else {
+            let resultNode = null;
+            for (let childNode of currentNode.children){
+                resultNode = this.removeNode(childNode, nodeName);
+                if (resultNode && resultNode.name === nodeName){
+                    let resultNodeIndex = currentNode.children.indexOf(resultNode);
+                    currentNode.children.splice(resultNodeIndex, resultNodeIndex+1);
                 }
             }
             return resultNode;

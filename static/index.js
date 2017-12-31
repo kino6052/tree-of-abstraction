@@ -19,6 +19,14 @@ var HierarchyController = (function () {
         this.hierarchyModel.updateNodeName(nodeName, newNodeName);
         this.display();
     };
+    HierarchyController.prototype.add = function (nodeName) {
+        this.hierarchyModel.add(nodeName, String);
+        this.display();
+    };
+    HierarchyController.prototype.remove = function (nodeName) {
+        this.hierarchyModel.remove(nodeName, String);
+        this.display();
+    };
     return HierarchyController;
 }());
 var HierarchyModel = (function () {
@@ -59,6 +67,15 @@ var HierarchyModel = (function () {
         var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
         node.name = newNodeName;
     };
+    HierarchyModel.prototype.add = function (nodeName) {
+        var hierarchyTree = this.hierarchyTree;
+        var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
+        node.children.push(new HierarchyNode("newNode", [], true, false));
+    };
+    HierarchyModel.prototype.remove = function (nodeName) {
+        var hierarchyTree = this.hierarchyTree;
+        var node = hierarchyTree.removeNode(hierarchyTree.hierarchyRoot, nodeName);
+    };
     return HierarchyModel;
 }());
 var HierarchyView = (function () {
@@ -84,7 +101,7 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.displayNodeHTML = function (node) {
         if (node.visible) {
-            return "<li><div class='node' id='" + node.name + "' style='width: 100%; height: 50px; border: 1px dashed black;'>" + node.name + "<span class='collapse'> collapse </span>|<span class='edit'> edit </span></div></li>";
+            return "<li><div class='node' id='" + node.name + "' style='font-weight: bold;'>" + node.name + "</div><span class='collapse'> collapse </span>|<span class='edit'> edit </span>|<span class='add'> add </span>|<span class='remove'> remove </span></div></li>";
         }
         else {
             return "";
@@ -94,18 +111,26 @@ var HierarchyView = (function () {
         this.hierarchyWindow.html(this.displayHierarchyTreeHTML(hierarchyModel));
     };
     HierarchyView.prototype.initLogic = function (hierarchyController) {
-        $(".node .collapse").on("click", function (e) {
-            var nodeName = $(e.currentTarget).parent(".node")[0].id;
+        $(".collapse").on("click", function (e) {
+            var nodeName = $(e.currentTarget).siblings(".node")[0].id;
             hierarchyController.collapseNode(nodeName);
         });
-        $(".node .edit").on("click", function (e) {
-            var nodeName = $(e.currentTarget).parent(".node")[0].id;
-            hierarchyController.edit(nodeName, hierarchyController);
+        $(".edit").on("click", function (e) {
+            var nodeName = $(e.currentTarget).siblings(".node")[0].id;
+            hierarchyController.edit(nodeName);
+        });
+        $(".add").on("click", function (e) {
+            var nodeName = $(e.currentTarget).siblings(".node")[0].id;
+            hierarchyController.add(nodeName);
+        });
+        $(".remove").on("click", function (e) {
+            var nodeName = $(e.currentTarget).siblings(".node")[0].id;
+            hierarchyController.remove(nodeName);
         });
     };
     HierarchyView.prototype.edit = function (nodeName, hierarchyController) {
         var node = $(".node#" + nodeName);
-        $(".node#" + nodeName).html("<input placeholder='" + nodeName + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
+        $("#" + nodeName).html("<input placeholder='" + nodeName + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
         node.find(".cancel").on("click", function () {
             hierarchyController.display();
         });
@@ -197,6 +222,23 @@ var HierarchyTree = (function () {
                 resultNode = this.findNode(childNode, nodeName);
                 if (resultNode && resultNode.name === nodeName) {
                     return resultNode;
+                }
+            }
+            return resultNode;
+        }
+    };
+    HierarchyTree.prototype.removeNode = function (currentNode, nodeName) {
+        if (currentNode.name === nodeName) {
+            return currentNode;
+        }
+        else {
+            var resultNode = null;
+            for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
+                var childNode = _a[_i];
+                resultNode = this.removeNode(childNode, nodeName);
+                if (resultNode && resultNode.name === nodeName) {
+                    var resultNodeIndex = currentNode.children.indexOf(resultNode);
+                    currentNode.children.splice(resultNodeIndex, resultNodeIndex + 1);
                 }
             }
             return resultNode;
