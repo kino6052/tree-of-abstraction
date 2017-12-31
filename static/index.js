@@ -8,13 +8,15 @@ var HierarchyController = (function () {
         this.hierarchyView.display(this.hierarchyModel);
         this.hierarchyView.initLogic(this);
     };
-    HierarchyController.prototype.toggleNode = function (nodeId) {
-        var hierarchyRoot = this.hierarchyModel.hierarchyTree.hierarchyRoot;
-        this.hierarchyModel.toggleNode(this.hierarchyModel.findNode(nodeId));
+    HierarchyController.prototype.collapseNode = function (nodeName) {
+        this.hierarchyModel.collapseNode(nodeName);
         this.display();
     };
-    HierarchyController.prototype.collapseNode = function (nodeId) {
-        this.hierarchyModel.collapseNode(nodeId);
+    HierarchyController.prototype.edit = function (nodeName) {
+        this.hierarchyView.edit(nodeName, this);
+    };
+    HierarchyController.prototype.updateNodeName = function (nodeName, newNodeName) {
+        this.hierarchyModel.updateNodeName(nodeName, newNodeName);
         this.display();
     };
     return HierarchyController;
@@ -29,28 +31,33 @@ var HierarchyModel = (function () {
     HierarchyModel.prototype.setHierarchyTree = function (hierarchyTree) {
         this.hierarchyTree = hierarchyTree;
     };
-    HierarchyModel.prototype.toggleNode = function (nodeId) {
+    HierarchyModel.prototype.toggleNode = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
-        hierarchyTree.toggleNode(nodeId);
+        hierarchyTree.toggleNode(nodeName);
     };
-    HierarchyModel.prototype.showChildren = function (nodeId) {
+    HierarchyModel.prototype.showChildren = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
-        var node = this.findNode(nodeId);
+        var node = this.findNode(nodeName);
         hierarchyTree.showChildren(node);
     };
-    HierarchyModel.prototype.hideChildren = function (nodeId) {
+    HierarchyModel.prototype.hideChildren = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
-        var node = this.findNode(nodeId);
+        var node = this.findNode(nodeName);
         hierarchyTree.hideChildren(node);
     };
-    HierarchyModel.prototype.findNode = function (nodeId) {
+    HierarchyModel.prototype.findNode = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
-        var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeId);
+        var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
         return node;
     };
-    HierarchyModel.prototype.collapseNode = function (nodeId) {
+    HierarchyModel.prototype.collapseNode = function (nodeName) {
         var hierarchyTree = this.hierarchyTree;
-        hierarchyTree.collapseNode(nodeId);
+        hierarchyTree.collapseNode(nodeName);
+    };
+    HierarchyModel.prototype.updateNodeName = function (nodeName, newNodeName) {
+        var hierarchyTree = this.hierarchyTree;
+        var node = hierarchyTree.findNode(hierarchyTree.hierarchyRoot, nodeName);
+        node.name = newNodeName;
     };
     return HierarchyModel;
 }());
@@ -77,7 +84,7 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.displayNodeHTML = function (node) {
         if (node.visible) {
-            return "<li><div class='node' id='" + node.name + "' style='width: 100%; height: 50px; border: 1px dashed black;'>" + node.name + " <span class='collapse'>x</span></div></li>";
+            return "<li><div class='node' id='" + node.name + "' style='width: 100%; height: 50px; border: 1px dashed black;'>" + node.name + "<span class='collapse'> collapse </span>|<span class='edit'> edit </span></div></li>";
         }
         else {
             return "";
@@ -88,8 +95,24 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.initLogic = function (hierarchyController) {
         $(".node .collapse").on("click", function (e) {
-            var nodeId = $(e.currentTarget).parent(".node")[0].id;
-            hierarchyController.collapseNode(nodeId);
+            var nodeName = $(e.currentTarget).parent(".node")[0].id;
+            hierarchyController.collapseNode(nodeName);
+        });
+        $(".node .edit").on("click", function (e) {
+            var nodeName = $(e.currentTarget).parent(".node")[0].id;
+            hierarchyController.edit(nodeName, hierarchyController);
+        });
+    };
+    HierarchyView.prototype.edit = function (nodeName, hierarchyController) {
+        var node = $(".node#" + nodeName);
+        $(".node#" + nodeName).html("<input placeholder='" + nodeName + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
+        node.find(".cancel").on("click", function () {
+            hierarchyController.display();
+        });
+        node.find(".save").on("click", function () {
+            var newNodeName = node.find("input").val();
+            hierarchyController.updateNodeName(nodeName, newNodeName);
+            hierarchyController.display();
         });
     };
     return HierarchyView;
@@ -163,24 +186,24 @@ var HierarchyTree = (function () {
             this.showChildren(childNode);
         }
     };
-    HierarchyTree.prototype.findNode = function (currentNode, nodeId) {
-        if (currentNode.name === nodeId) {
+    HierarchyTree.prototype.findNode = function (currentNode, nodeName) {
+        if (currentNode.name === nodeName) {
             return currentNode;
         }
         else {
             var resultNode = null;
             for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
                 var childNode = _a[_i];
-                resultNode = this.findNode(childNode, nodeId);
-                if (resultNode && resultNode.name === nodeId) {
+                resultNode = this.findNode(childNode, nodeName);
+                if (resultNode && resultNode.name === nodeName) {
                     return resultNode;
                 }
             }
             return resultNode;
         }
     };
-    HierarchyTree.prototype.collapseNode = function (nodeId) {
-        var nodeToCollapse = this.findNode(this.hierarchyRoot, nodeId);
+    HierarchyTree.prototype.collapseNode = function (nodeName) {
+        var nodeToCollapse = this.findNode(this.hierarchyRoot, nodeName);
         nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
         if (nodeToCollapse.collapsed) {
             this.hideChildren(nodeToCollapse);
