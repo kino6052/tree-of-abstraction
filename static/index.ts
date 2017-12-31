@@ -360,6 +360,35 @@ exports.MODEL_JsonToTreeTest = function(test) {
     test.done();
 };
 
+exports.MODEL_AddTest = function(test) {
+    let hierarchyTree = new HierarchyTree({
+        name: "node001",
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyModel = new HierarchyModel(hierarchyTree);
+    let newNode = new HierarchyNode("node002", []);
+    hierarchyModel.add(newNode, "node001");
+    test.deepEqual(newNode, hierarchyModel.hierarchyTree.hierarchyRoot.children[0]);
+    test.done();
+}
+
+exports.MODEL_RemoveTest = function(test) {
+    let hierarchyTree = new HierarchyTree({
+        name: "node001",
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyModel = new HierarchyModel(hierarchyTree);
+    let newNode = new HierarchyNode("node002", []);
+    hierarchyModel.add(newNode, "node001");
+    hierarchyModel.remove("node002"); // TODO: Change Node Name to Unique ID!
+    test.deepEqual(0, hierarchyModel.hierarchyTree.hierarchyRoot.children.length);
+    test.done();
+}
+
 exports.VIEW_JsonToDOMTreeTest = function(test) {
     let hierarchyTree = new HierarchyTree({
         name: "node001",

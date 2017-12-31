@@ -335,6 +335,33 @@ exports.MODEL_JsonToTreeTest = function (test) {
     test.deepEqual(hierarchyTree.hierarchyRoot, hierarchyNode);
     test.done();
 };
+exports.MODEL_AddTest = function (test) {
+    var hierarchyTree = new HierarchyTree({
+        name: "node001",
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyModel = new HierarchyModel(hierarchyTree);
+    var newNode = new HierarchyNode("node002", []);
+    hierarchyModel.add(newNode, "node001");
+    test.deepEqual(newNode, hierarchyModel.hierarchyTree.hierarchyRoot.children[0]);
+    test.done();
+};
+exports.MODEL_RemoveTest = function (test) {
+    var hierarchyTree = new HierarchyTree({
+        name: "node001",
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyModel = new HierarchyModel(hierarchyTree);
+    var newNode = new HierarchyNode("node002", []);
+    hierarchyModel.add(newNode, "node001");
+    hierarchyModel.remove("node002");
+    test.deepEqual(0, hierarchyModel.hierarchyTree.hierarchyRoot.children.length);
+    test.done();
+};
 exports.VIEW_JsonToDOMTreeTest = function (test) {
     var hierarchyTree = new HierarchyTree({
         name: "node001",
