@@ -1,3 +1,8 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var $ = $ || function () {
     return {
         html: function () {
@@ -14,6 +19,13 @@ var toLowerSerpent = function (input) {
 var generateUniqueHashId = function () {
     return Math.random().toString(16).replace(".", "") + new Date().getTime().toString(16);
 };
+// Base Classes
+var BaseNode = (function () {
+    function BaseNode() {
+    }
+    return BaseNode;
+}());
+// Hierarchy Classes
 var HierarchyController = (function () {
     function HierarchyController(hierarchyModel, hierarchyView) {
         this.hierarchyModel = hierarchyModel;
@@ -219,7 +231,6 @@ var HierarchyModel = (function () {
         }
     };
     HierarchyModel.prototype.findNode = function (currentNode, nodeId) {
-        console.log(currentNode.id, nodeId);
         if (currentNode.id === nodeId) {
             return currentNode;
         }
@@ -273,12 +284,12 @@ var HierarchyModel = (function () {
     };
     HierarchyModel.prototype.updateNodeName = function (nodeId, newNodeName) {
         var node = this.findNode(this.hierarchyRoot, nodeId);
-        console.log(node);
         node.name = newNodeName;
     };
     return HierarchyModel;
 }());
-var HierarchyNode = (function () {
+var HierarchyNode = (function (_super) {
+    __extends(HierarchyNode, _super);
     function HierarchyNode(name, children) {
         this.name = name;
         this.id = generateUniqueHashId();
@@ -287,41 +298,108 @@ var HierarchyNode = (function () {
         this.collapsed = false;
     }
     return HierarchyNode;
+}(BaseNode));
+// Notes Classes
+var NoteNode = (function (_super) {
+    __extends(NoteNode, _super);
+    function NoteNode(name) {
+        this.name = name;
+        this.id = generateUniqueHashId();
+        this.visible = true;
+    }
+    return NoteNode;
+}(BaseNode));
+var NoteMenuModel = (function () {
+    function NoteMenuModel(noteList) {
+        this.notes = this.convertJsonArrayToNoteArray(noteList);
+    }
+    NoteMenuModel.prototype.convertJsonArrayToNoteArray = function (noteList) {
+        var notes = [];
+        var noteNode;
+        for (var _i = 0, noteList_1 = noteList; _i < noteList_1.length; _i++) {
+            var note = noteList_1[_i];
+            if (note.hasOwnProperty("name")) {
+                noteNode = new NoteNode(note.name);
+                notes.unshift(noteNode);
+            }
+        }
+        return notes;
+    };
+    NoteMenuModel.prototype.add = function (note) {
+        this.notes.unshift(note);
+    };
+    NoteMenuModel.prototype.remove = function (noteId) {
+        var node = this.findNode(noteId);
+        if (node) {
+            var index = this.notes.indexOf(node);
+            this.notes.splice(index, index + 1);
+        }
+    };
+    NoteMenuModel.prototype.findNode = function (noteId) {
+        for (var _i = 0, _a = this.notes; _i < _a.length; _i++) {
+            var note = _a[_i];
+            if (note.id === noteId) {
+                return note;
+            }
+        }
+        return null;
+    };
+    return NoteMenuModel;
 }());
 var hierarchyModel = new HierarchyModel({
-    name: "node001",
+    name: "ROOT",
     id: generateUniqueHashId(),
     collapsed: false,
     visible: true,
-    children: [
-        {
-            name: "node002",
-            id: generateUniqueHashId(),
-            collapsed: false,
-            visible: true,
-            children: [
-                {
-                    name: "node004",
-                    id: generateUniqueHashId(),
-                    collapsed: false,
-                    visible: true,
-                    children: []
-                }
-            ]
-        },
-        {
-            name: "node003",
-            id: generateUniqueHashId(),
-            collapsed: false,
-            visible: true,
-            children: []
-        }
-    ]
+    children: []
 });
 var hierarchyView = new HierarchyView($("#hierarchy-area"));
 var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
 // Node Unit Tests
-exports.MODEL_JsonToTreeTest = function (test) {
+exports.NOTE_MENU_JsonToListTest = function (test) {
+    var noteMenuModel = new NoteMenuModel([{
+            name: "note001",
+            id: generateUniqueHashId(),
+            visible: true,
+            articleId: null,
+            labelIds: []
+        }]);
+    var noteNode = new NoteNode("note001", []);
+    test.notEqual(noteMenuModel.notes[0].id, noteNode.id);
+    noteMenuModel.notes[0].id = "";
+    noteNode.id = "";
+    test.deepEqual(noteMenuModel.notes[0], noteNode);
+    test.done();
+};
+exports.NOTE_MENU_MODEL_AddTest = function (test) {
+    var noteMenuModel = new NoteMenuModel({
+        name: "note001",
+        id: generateUniqueHashId(),
+        visible: true,
+        articleId: null,
+        labelIds: []
+    });
+    var newNode = new NoteNode("node002");
+    noteMenuModel.add(newNode);
+    test.deepEqual(newNode, noteMenuModel.notes[0]);
+    test.done();
+};
+exports.NOTE_MENU_MODEL_RemoveTest = function (test) {
+    console.log("hello world");
+    var noteMenuModel = new NoteMenuModel({
+        name: "note001",
+        id: generateUniqueHashId(),
+        visible: true,
+        articleId: null,
+        labelIds: []
+    });
+    var newNode = new NoteNode("node002");
+    noteMenuModel.add(newNode);
+    noteMenuModel.remove(newNode.id);
+    test.ok(0 === noteMenuModel.notes.length);
+    test.done();
+};
+exports.HIERARCHY_MODEL_JsonToTreeTest = function (test) {
     var hierarchyModel = new HierarchyModel({
         name: "node001",
         id: generateUniqueHashId(),
@@ -336,7 +414,7 @@ exports.MODEL_JsonToTreeTest = function (test) {
     test.deepEqual(hierarchyModel.hierarchyRoot, hierarchyNode);
     test.done();
 };
-exports.MODEL_AddTest = function (test) {
+exports.HIERARCHY_MODEL_AddTest = function (test) {
     var hierarchyModel = new HierarchyModel({
         name: "node001",
         id: generateUniqueHashId(),
@@ -349,7 +427,7 @@ exports.MODEL_AddTest = function (test) {
     test.deepEqual(newNode, hierarchyModel.hierarchyRoot.children[0]);
     test.done();
 };
-exports.MODEL_RemoveTest = function (test) {
+exports.HIERARCHY_MODEL_RemoveTest = function (test) {
     var hierarchyModel = new HierarchyModel({
         name: "node001",
         id: generateUniqueHashId(),
@@ -363,7 +441,7 @@ exports.MODEL_RemoveTest = function (test) {
     test.deepEqual(0, hierarchyModel.hierarchyRoot.children.length);
     test.done();
 };
-exports.MODEL_UpdateNode = function (test) {
+exports.HIERARCHY_MODEL_UpdateNode = function (test) {
     var id = generateUniqueHashId();
     var hierarchyModel = new HierarchyModel({
         name: "node001",
@@ -375,7 +453,7 @@ exports.MODEL_UpdateNode = function (test) {
     hierarchyModel.updateNodeName(hierarchyModel.hierarchyRoot.id, "Test");
     test.done();
 };
-exports.VIEW_JsonToDOMTreeTest = function (test) {
+exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function (test) {
     var nodeId001 = "";
     var nodeId002 = "";
     var nodeId003 = "";
@@ -445,7 +523,7 @@ exports.VIEW_JsonToDOMTreeTest = function (test) {
     test.equals(html, hierarchyView.displayHierarchyModelHTML(hierarchyModel));
     test.done();
 };
-exports.AUX_ToLowerSerpentTest = function (test) {
+exports.HIERARCHY_AUX_ToLowerSerpentTest = function (test) {
     var input;
     var result;
     input = "Test Test Test";

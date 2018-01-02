@@ -17,6 +17,15 @@ let generateUniqueHashId = function(){
     return Math.random().toString(16).replace(".", "") + new Date().getTime().toString(16);
 }
 
+// Base Classes
+class BaseNode {
+    name: string;
+    id: string;
+    visible: string;
+    
+}
+
+// Hierarchy Classes
 class HierarchyController {
     hierarchyModel: HierarchyModel
     hierarchyView: HierarchyView
@@ -56,7 +65,6 @@ class HierarchyView {
     constructor(hierarchyWindow: Object){
         this.hierarchyWindow = hierarchyWindow;
     }
-    
     displayHierarchyModelHTML(hierarchyModel:HierarchyModel){
         let result = "";
         let previousIndentAmount = 0;
@@ -84,7 +92,6 @@ class HierarchyView {
         }
         return "<ul>" + result + "</ul>";
     }
-    
     displayNodeHTML(node: HierarchyNode){
         if (node.visible){
             return this.generateNodeListElement(node.id, node.name);
@@ -119,11 +126,9 @@ class HierarchyView {
                     "<span class='remove'> remove </span>"                                              +
                 "</div>";
     }
-    
     display(hierarchyModel: HierarchyModel){
         this.hierarchyWindow.html(this.displayHierarchyModelHTML(hierarchyModel));
     }
-    
     initLogic(hierarchyController: HierarchyController){
         $(".collapse").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".node")[0].id;
@@ -142,7 +147,6 @@ class HierarchyView {
             hierarchyController.remove(nodeId);
         })
     }
-    
     edit(nodeId: String, hierarchyController: HierarchyController){
         let node = $("#"+nodeId);
         let nodeName = node.find(".node-name").text();
@@ -200,7 +204,6 @@ class HierarchyModel {
         }
         return currentNode;
     }
-    
     iterate(currentNode: HierarchyNode, callback: Function, indentAmount: Number){
         if (currentNode){
             callback(currentNode, indentAmount);
@@ -212,21 +215,18 @@ class HierarchyModel {
             return
         }
     }
-    
     toggleNode(node: HierarchyNode){
         for (let childNode of node.children){
             childNode.visible = !childNode.visible;
             this.toggleNode(childNode);
         }
     }
-    
     hideChildren(parent: HierarchyNode){
         for (let childNode of parent.children){
             childNode.visible = false;
             this.hideChildren(childNode);
         }
     }
-    
     showChildren(parent: HierarchyNode){
         for (let childNode of parent.children){
             if (!parent.collapsed && parent.visible) {
@@ -235,9 +235,7 @@ class HierarchyModel {
             this.showChildren(childNode);
         }
     }
-    
     findNode(currentNode: HierarchyNode, nodeId: String){
-        console.log(currentNode.id, nodeId);
         if (currentNode.id === nodeId) {
             return currentNode;
         } else {
@@ -251,7 +249,6 @@ class HierarchyModel {
             return resultNode;
         }
     }
-    
     removeNode(currentNode: HierarchyNode, nodeId: String){
         if (currentNode.id === nodeId) {
             let resultNodeIndex = currentNode.children.indexOf(resultNode);
@@ -269,16 +266,13 @@ class HierarchyModel {
             return resultNode;
         }
     }
-    
     add(newNode:HierarchyNode, nodeId:String){
         let node = this.findNode(this.hierarchyRoot, nodeId);
         node.children.unshift(newNode);
     }
-    
     remove(nodeId:String){
         let node = this.removeNode(this.hierarchyRoot, nodeId);
     }
-    
     collapseNode(nodeId: String){
         let nodeToCollapse = this.findNode(this.hierarchyRoot, nodeId);
         nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
@@ -288,20 +282,17 @@ class HierarchyModel {
             this.showChildren(nodeToCollapse);
         }
     }
-    
     updateNodeName(nodeId:String, newNodeName:String){
         let node = this.findNode(this.hierarchyRoot, nodeId);
-        console.log(node);
         node.name = newNodeName;
     }
 }
 
-class HierarchyNode {
-    name: string
-    id: string
-    visible: Boolean
-    children: Array<HierarchyNode>
+
+
+class HierarchyNode extends BaseNode {
     collapsed: Boolean
+    children: Array<BaseNode>;
     constructor(name: string, children: Array<HierarchyNode>){
         this.name = name;
         this.id = generateUniqueHashId();
@@ -311,43 +302,113 @@ class HierarchyNode {
     }
 }
 
+// Notes Classes
+class NoteNode extends BaseNode {
+    constructor(name: string){
+        this.name = name;
+        this.id = generateUniqueHashId();
+        this.visible = true;
+    }
+}
+
+class NoteMenuModel {
+    notes: Array<BaseNode>;
+    constructor(noteList:Array<BaseNode>){
+        this.notes = this.convertJsonArrayToNoteArray(noteList);
+    }
+    convertJsonArrayToNoteArray(noteList:Array<BaseNode>){
+        let notes = [];
+        let noteNode;
+        for (let note of noteList){
+            if (note.hasOwnProperty("name")){
+                noteNode = new NoteNode(note.name);
+                notes.unshift(noteNode);
+            }
+        }
+        return notes;
+    }
+    add(note:NoteNode){
+        this.notes.unshift(note);
+    }
+    remove(noteId:string){
+        let node = this.findNode(noteId);
+        if (node){
+            let index = this.notes.indexOf(node);
+            this.notes.splice(index, index+1);
+        }
+    }
+    findNode(noteId:string){
+        for (let note of this.notes){
+            if (note.id === noteId){
+                return note;
+            }
+        }
+        return null;
+    }
+}
+
 let hierarchyModel = new HierarchyModel(
     {
-        name: "node001",
+        name: "ROOT",
         id: generateUniqueHashId(),
         collapsed: false,
         visible: true,
-        children: [
-            {
-                name: "node002",
-                id: generateUniqueHashId(),
-                collapsed: false,
-                visible: true,
-                children: [
-                    {
-                        name: "node004",
-                        id: generateUniqueHashId(),
-                        collapsed: false,
-                        visible: true,
-                        children: []
-                    }    
-                ]
-            },
-            {
-                name: "node003",
-                id: generateUniqueHashId(),
-                collapsed: false,
-                visible: true,
-                children: []
-            }
-        ]
+        children: []
     }
 )
 let hierarchyView = new HierarchyView($("#hierarchy-area"));
 let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
 
 // Node Unit Tests
-exports.MODEL_JsonToTreeTest = function(test) {
+exports.NOTE_MENU_JsonToListTest = function(test) {
+    let noteMenuModel = new NoteMenuModel([{
+       name: "note001",
+       id: generateUniqueHashId(),
+       visible: true,
+       articleId: null,
+       labelIds: []
+    }]);
+    let noteNode = new NoteNode("note001", []);
+    test.notEqual(noteMenuModel.notes[0].id, noteNode.id);
+    noteMenuModel.notes[0].id="";
+    noteNode.id="";
+    test.deepEqual(noteMenuModel.notes[0], noteNode);
+    test.done();
+};
+
+exports.NOTE_MENU_MODEL_AddTest = function(test) {
+    let noteMenuModel = new NoteMenuModel({
+        name: "note001",
+        id: generateUniqueHashId(),
+        visible: true,
+        articleId: null,
+        labelIds: []
+    });
+    let newNode = new NoteNode("node002");
+    noteMenuModel.add(newNode);
+    test.deepEqual(newNode, noteMenuModel.notes[0]);
+    test.done();
+}
+
+exports.NOTE_MENU_MODEL_RemoveTest = function(test) {
+    console.log("hello world");
+    let noteMenuModel = new NoteMenuModel({
+        name: "note001",
+        id: generateUniqueHashId(),
+        visible: true,
+        articleId: null,
+        labelIds: []
+    });
+    
+    let newNode = new NoteNode("node002");
+    noteMenuModel.add(newNode);
+    noteMenuModel.remove(newNode.id);
+    
+    test.ok(0===noteMenuModel.notes.length);
+    test.done();
+}
+
+exports.HIERARCHY_MODEL_JsonToTreeTest = function(test) {
     let hierarchyModel = new HierarchyModel({
         name: "node001",
         id: generateUniqueHashId(),
@@ -363,7 +424,7 @@ exports.MODEL_JsonToTreeTest = function(test) {
     test.done();
 };
 
-exports.MODEL_AddTest = function(test) {
+exports.HIERARCHY_MODEL_AddTest = function(test) {
     let hierarchyModel = new HierarchyModel({
         name: "node001",
         id: generateUniqueHashId(),
@@ -377,7 +438,7 @@ exports.MODEL_AddTest = function(test) {
     test.done();
 }
 
-exports.MODEL_RemoveTest = function(test) {
+exports.HIERARCHY_MODEL_RemoveTest = function(test) {
     let hierarchyModel = new HierarchyModel({
         name: "node001",
         id: generateUniqueHashId(),
@@ -392,7 +453,7 @@ exports.MODEL_RemoveTest = function(test) {
     test.done();
 }
 
-exports.MODEL_UpdateNode = function(test){
+exports.HIERARCHY_MODEL_UpdateNode = function(test){
     let id = generateUniqueHashId();
     let hierarchyModel = new HierarchyModel({
         name: "node001",
@@ -406,7 +467,7 @@ exports.MODEL_UpdateNode = function(test){
     test.done();
 }
 
-exports.VIEW_JsonToDOMTreeTest = function(test) {
+exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function(test) {
     var nodeId001 = "";
     var nodeId002 = "";
     var nodeId003 = "";
@@ -477,7 +538,7 @@ exports.VIEW_JsonToDOMTreeTest = function(test) {
     test.done();
 };
 
-exports.AUX_ToLowerSerpentTest = function(test) {
+exports.HIERARCHY_AUX_ToLowerSerpentTest = function(test) {
     let input;
     let result;
     input = "Test Test Test";
