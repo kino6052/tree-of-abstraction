@@ -108,7 +108,7 @@ class HierarchyView {
             "</li>"
     }
     generateNodeNameStyle(){
-        return "style='font-weight: bold; border: 1px dashed green;'";
+        return "style='font-weight: bold;'";
     }
     generateNodeButtons(){
         return "" +

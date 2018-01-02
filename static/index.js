@@ -95,7 +95,7 @@ var HierarchyView = (function () {
             "</li>";
     };
     HierarchyView.prototype.generateNodeNameStyle = function () {
-        return "style='font-weight: bold; border: 1px dashed green;'";
+        return "style='font-weight: bold;'";
     };
     HierarchyView.prototype.generateNodeButtons = function () {
         return "" +
