@@ -36,8 +36,8 @@ class HierarchyController {
     edit(nodeId:String){
         this.hierarchyView.edit(nodeId, this);
     }
-    updatenodeId(nodeId:String, newnodeId:String){
-        this.hierarchyModel.updatenodeId(nodeId, newnodeId);
+    updateNodeName(nodeId:String, newNodeName:String){
+        this.hierarchyModel.updateNodeName(nodeId, newNodeName);
         this.display();
     }
     add(nodeId:String){
@@ -49,56 +49,6 @@ class HierarchyController {
         this.display();
     }
 }
-
-// class HierarchyModel {
-//     HierarchyModel: HierarchyModel
-//     constructor(HierarchyModel: HierarchyModel){
-//         this.HierarchyModel = HierarchyModel;
-//     }
-//     getHierarchyModelAsObject(){
-//         return this.HierarchyModel;
-//     }
-//     setHierarchyModel(HierarchyModel: HierarchyModel){
-//         this.HierarchyModel = HierarchyModel;
-//     }
-//     toggleNode(nodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         HierarchyModel.toggleNode(nodeId);
-//     }
-//     showChildren(nodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         let node = this.findNode(nodeId);
-//         HierarchyModel.showChildren(node);
-//     }
-//     hideChildren(nodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         let node = this.findNode(nodeId);
-//         HierarchyModel.hideChildren(node);
-//     }
-//     findNode(nodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         let node = HierarchyModel.findNode(HierarchyModel.hierarchyRoot, nodeId);
-//         return node;
-//     }
-//     collapseNode(nodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         HierarchyModel.collapseNode(nodeId);  
-//     }
-//     updatenodeId(nodeId:String, newnodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         let node = HierarchyModel.findNode(HierarchyModel.hierarchyRoot, nodeId);
-//         node.name = newnodeId;
-//     }
-//     add(newNode:HierarchyNode, nodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         let node = HierarchyModel.findNode(HierarchyModel.hierarchyRoot, nodeId);
-//         node.children.unshift(newNode);
-//     }
-//     remove(nodeId:String){
-//         let HierarchyModel = this.HierarchyModel;
-//         let node = HierarchyModel.removeNode(HierarchyModel.hierarchyRoot, nodeId);
-//     }
-// }
 
 class HierarchyView {
     hierarchyController: HierarchyController
@@ -182,8 +132,8 @@ class HierarchyView {
             hierarchyController.display();
         });
         node.find(".save").on("click", ()=>{
-            let newnodeId = node.find("input").val();
-            hierarchyController.updatenodeId(nodeId, newnodeId);
+            let newNodeName = node.find("input").val();
+            hierarchyController.updateNodeName(nodeId, newNodeName);
             hierarchyController.display();
         });
     }
@@ -264,13 +214,14 @@ class HierarchyModel {
     }
     
     findNode(currentNode: HierarchyNode, nodeId: String){
-        if (toLowerSerpent(currentNode.id) === toLowerSerpent(nodeId)) {
+        console.log(currentNode.id, nodeId);
+        if (currentNode.id === nodeId) {
             return currentNode;
         } else {
             let resultNode = null;
             for (let childNode of currentNode.children){
                 resultNode = this.findNode(childNode, nodeId);
-                if (resultNode && toLowerSerpent(resultNode.id) === toLowerSerpent(nodeId)){
+                if (resultNode && resultNode.id === nodeId){
                     return resultNode;
                 }
             }
@@ -297,7 +248,6 @@ class HierarchyModel {
     }
     
     add(newNode:HierarchyNode, nodeId:String){
-        console.log(nodeId);
         let node = this.findNode(this.hierarchyRoot, nodeId);
         node.children.unshift(newNode);
     }
@@ -314,6 +264,12 @@ class HierarchyModel {
         } else {
             this.showChildren(nodeToCollapse);
         }
+    }
+    
+    updateNodeName(nodeId:String, newNodeName:String){
+        let node = this.findNode(this.hierarchyRoot, nodeId);
+        console.log(node);
+        node.name = newNodeName;
     }
 }
 
@@ -413,7 +369,17 @@ exports.MODEL_RemoveTest = function(test) {
     test.done();
 }
 
-exports.MODEL_UniqueHashIdTest = function(test){
+exports.MODEL_UpdateNode = function(test){
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    hierarchyModel.updateNodeName(hierarchyModel.hierarchyRoot.id, "Test");
+    
     test.done();
 }
 
