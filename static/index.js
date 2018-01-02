@@ -80,18 +80,21 @@ var HierarchyView = (function () {
             return "";
         }
     };
+    HierarchyView.prototype.generateNodeStyle = function () {
+        return "style='width: 200px;'";
+    };
     HierarchyView.prototype.generateNodeListElement = function (nodeId, nodeName) {
         return "" +
-            "<li>" +
+            "<li " + this.generateNodeStyle() + ">" +
             "<div class='node' id='" + nodeId + "'>" +
-            "<span class='node-name' " + this.generateNodeStyle() + ">" +
+            "<span class='node-name' " + this.generateNodeNameStyle() + ">" +
             nodeName +
             "</span>" +
             this.generateNodeButtons() +
             "</div>" +
             "</li>";
     };
-    HierarchyView.prototype.generateNodeStyle = function () {
+    HierarchyView.prototype.generateNodeNameStyle = function () {
         return "style='font-weight: bold; border: 1px dashed green;'";
     };
     HierarchyView.prototype.generateNodeButtons = function () {
@@ -315,7 +318,7 @@ var hierarchyModel = new HierarchyModel({
         }
     ]
 });
-var hierarchyView = new HierarchyView($("#div001"));
+var hierarchyView = new HierarchyView($("#hierarchy-area"));
 var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
 // Node Unit Tests
 exports.MODEL_JsonToTreeTest = function (test) {
@@ -372,20 +375,6 @@ exports.MODEL_UpdateNode = function (test) {
     hierarchyModel.updateNodeName(hierarchyModel.hierarchyRoot.id, "Test");
     test.done();
 };
-// exports.MODEL_HideChildren = function(test) {
-//     let HierarchyModel = new HierarchyModel({
-//         name: "node001",
-//         collapsed: false,
-//         visible: true,
-//         children: []
-//     });
-//     let hierarchyModel = new HierarchyModel(HierarchyModel);
-//     let newNode = new HierarchyNode("node002", []);
-//     hierarchyModel.add(newNode, "node001");
-//     hierarchyModel.remove("node002"); // TODO: Change Node Name to Unique ID!
-//     test.deepEqual(0, hierarchyModel.HierarchyModel.hierarchyRoot.children.length);
-//     test.done();
-// }
 exports.VIEW_JsonToDOMTreeTest = function (test) {
     var nodeId001 = "";
     var nodeId002 = "";

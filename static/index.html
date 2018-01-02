@@ -1,9 +1,40 @@
 <html>
     <head>
+        <style>
+            #application-body {
+                height: 100%;
+                width: 100%;
+            }
+            div {
+                border: 1px dashed gray;
+            }
+            .area {
+                height: 100%;
+                overflow: scroll;
+            }
+            .area#notes-area {
+                width: 50%;
+                float: right;
+            }
+            .area#hierarchy-area {
+                margin-right: auto;
+            }
+            .area#notes-area textarea {
+                width: 100%;
+            }
+        </style>
     </head>
     <body>
-        <h1>Book One</h1>
-        <div id="div001"></div>
+        <div id="application-body">
+            <div id="notes-area" class="area">
+                <textarea rows="4" cols="50">
+                    At w3schools.com you will learn how to make a website. We offer free tutorials in all web development technologies.
+                </textarea>
+            </div>
+            <div id="hierarchy-area" class="area"></div>
+            
+        </div>
+        
         <script src="/dependencies/jquery/dist/jquery.min.js"></script>
         <script src="index.js"></script>
     </body>
