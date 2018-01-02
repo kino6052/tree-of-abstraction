@@ -87,19 +87,31 @@ class HierarchyView {
     
     displayNodeHTML(node: HierarchyNode){
         if (node.visible){
-            return ""                                                                                   +
-            "<li>"                                                                                      +
-                "<div class='node' id='"+node.id+"' style='font-weight: bold;'>"      + 
-                    node.name                                                                           + 
-                "</div>"                                                                                +
-                "<span class='collapse'> collapse </span>|"                                             + 
-                "<span class='edit'> edit </span>|"                                                     + 
-                "<span class='add'> add </span>|"                                                       + 
-                "<span class='remove'> remove </span>"                                                  + 
-            "</li>"
+            return this.generateNodeListElement(node.id, node.name);
         } else {
             return "";
         }
+    }
+    generateNodeListElement(nodeId:String, nodeName:String){
+        return ""                                                                                       +
+            "<li>"                                                                                      +
+                "<div class='node' id='"+nodeId+"' "+this.generateNodeStyle()+">"                       + 
+                    nodeName                                                                            + 
+                "</div>"                                                                                +
+                this.generateNodeButtons()                                                              +
+            "</li>"
+    }
+    generateNodeStyle(){
+        return "style='font-weight: bold; border: 1px dashed green;'";
+    }
+    generateNodeButtons(){
+        return "" +
+                "<div class='node-buttons'>"                                                            +
+                    "<span class='collapse'> collapse </span>|"                                         + 
+                    "<span class='edit'> edit </span>|"                                                 + 
+                    "<span class='add'> add </span>|"                                                   + 
+                    "<span class='remove'> remove </span>"                                              +
+                "</div>";
     }
     
     display(hierarchyModel: HierarchyModel){
@@ -127,7 +139,11 @@ class HierarchyView {
     
     edit(nodeId: String, hierarchyController: HierarchyController){
         let node = $(".node#" + nodeId);
-        $("#" + nodeId).html("<input placeholder='" + node.text() + "'><button class='save'>Save</button><button class='cancel'>Cancel</button>");
+        let html = ""                                   +
+            "<input placeholder='" + node.text() + "'>" +
+            "<button class='save'>Save</button>"        + 
+            "<button class='cancel'>Cancel</button>";
+        $("#" + nodeId).html(html);
         node.find(".cancel").on("click", ()=>{
             hierarchyController.display();
         });
@@ -413,41 +429,18 @@ exports.VIEW_JsonToDOMTreeTest = function(test) {
     nodeId001 = hierarchyModel.hierarchyRoot.id;
     let html = "";
     let hierarchyView = new HierarchyView($());
-    html = "<ul>"                                                                   +
-                "<li>"                                                              +
-                    "<div class='node' id='"+nodeId001+"' style='font-weight: bold;'>"    + 
-                        "node001"                                                   + 
-                    "</div>"                                                        +
-                    "<span class='collapse'> collapse </span>|"                     + 
-                    "<span class='edit'> edit </span>|"                             + 
-                    "<span class='add'> add </span>|"                               + 
-                    "<span class='remove'> remove </span>"                          + 
-                "</li>"                                                             +  
+    html = "" + 
+            "<ul>"                                                          +
+                hierarchyView.generateNodeListElement(nodeId001, "node001") +
             "</ul>";
     test.equals(html, hierarchyView.displayHierarchyModelHTML(hierarchyModel));
     let node002 = new HierarchyNode("node002", []);
     nodeId002 = node002.id;
     hierarchyModel.add(node002, nodeId001);
     html = "<ul>"                                                                       +
-                "<li>"                                                                  +
-                    "<div class='node' id='"+nodeId001+"' style='font-weight: bold;'>"        + 
-                        "node001"                                                       + 
-                    "</div>"                                                            +
-                    "<span class='collapse'> collapse </span>|"                         + 
-                    "<span class='edit'> edit </span>|"                                 + 
-                    "<span class='add'> add </span>|"                                   + 
-                    "<span class='remove'> remove </span>"                              + 
-                "</li>"                                                                 +     
+                hierarchyView.generateNodeListElement(nodeId001, "node001")                           +
                 "<ul>"                                                                  +
-                    "<li>"                                                              +
-                        "<div class='node' id='"+nodeId002+"' style='font-weight: bold;'>"    + 
-                            "node002"                                                   + 
-                        "</div>"                                                        +
-                        "<span class='collapse'> collapse </span>|"                     + 
-                        "<span class='edit'> edit </span>|"                             + 
-                        "<span class='add'> add </span>|"                               + 
-                        "<span class='remove'> remove </span>"                          + 
-                    "</li>"                                                             +  
+                    hierarchyView.generateNodeListElement(nodeId002, "node002")                       +
                 "</ul>"                                                                 +
             "</ul>";
     test.equals(html, hierarchyView.displayHierarchyModelHTML(hierarchyModel));
@@ -455,35 +448,11 @@ exports.VIEW_JsonToDOMTreeTest = function(test) {
     nodeId003 = node003.id;
     hierarchyModel.add(node003, nodeId002);
     html = "<ul>"                                                                           +
-                "<li>"                                                                      +
-                    "<div class='node' id='"+nodeId001+"' style='font-weight: bold;'>"            + 
-                        "node001"                                                           + 
-                    "</div>"                                                                +
-                    "<span class='collapse'> collapse </span>|"                             + 
-                    "<span class='edit'> edit </span>|"                                     + 
-                    "<span class='add'> add </span>|"                                       + 
-                    "<span class='remove'> remove </span>"                                  + 
-                "</li>"                                                                     +     
+                hierarchyView.generateNodeListElement(nodeId001, "node001")                               +     
                 "<ul>"                                                                      +
-                    "<li>"                                                                  +
-                        "<div class='node' id='"+nodeId002+"' style='font-weight: bold;'>"        + 
-                            "node002"                                                       + 
-                        "</div>"                                                            +
-                        "<span class='collapse'> collapse </span>|"                         + 
-                        "<span class='edit'> edit </span>|"                                 + 
-                        "<span class='add'> add </span>|"                                   + 
-                        "<span class='remove'> remove </span>"                              + 
-                    "</li>"                                                                 +  
+                    hierarchyView.generateNodeListElement(nodeId002, "node002")                           +  
                     "<ul>"                                                                  +
-                        "<li>"                                                              +
-                            "<div class='node' id='"+nodeId003+"' style='font-weight: bold;'>"    + 
-                                "node003"                                                   + 
-                            "</div>"                                                        +
-                            "<span class='collapse'> collapse </span>|"                     + 
-                            "<span class='edit'> edit </span>|"                             + 
-                            "<span class='add'> add </span>|"                               + 
-                            "<span class='remove'> remove </span>"                          + 
-                        "</li>"                                                             +  
+                        hierarchyView.generateNodeListElement(nodeId003, "node003")                       +  
                     "</ul>"                                                                 +
                 "</ul>"                                                                     +
             "</ul>";
@@ -492,79 +461,23 @@ exports.VIEW_JsonToDOMTreeTest = function(test) {
     nodeId004 = node004.id;
     hierarchyModel.add(node004, nodeId001);
     html = "<ul>"                                                                           +
-                "<li>"                                                                      +
-                    "<div class='node' id='"+nodeId001+"' style='font-weight: bold;'>"            + 
-                        "node001"                                                           + 
-                    "</div>"                                                                +
-                    "<span class='collapse'> collapse </span>|"                             + 
-                    "<span class='edit'> edit </span>|"                                     + 
-                    "<span class='add'> add </span>|"                                       + 
-                    "<span class='remove'> remove </span>"                                  + 
-                "</li>"                                                                     +     
+                hierarchyView.generateNodeListElement(nodeId001, "node001")                               +     
                 "<ul>"                                                                      +
-                    "<li>"                                                                  +
-                        "<div class='node' id='"+nodeId004+"' style='font-weight: bold;'>"        + 
-                            "node004"                                                       + 
-                        "</div>"                                                            +
-                        "<span class='collapse'> collapse </span>|"                         + 
-                        "<span class='edit'> edit </span>|"                                 + 
-                        "<span class='add'> add </span>|"                                   + 
-                        "<span class='remove'> remove </span>"                              + 
-                    "</li>"                                                                 +
-                    "<li>"                                                                  +
-                        "<div class='node' id='"+nodeId002+"' style='font-weight: bold;'>"        + 
-                            "node002"                                                       + 
-                        "</div>"                                                            +
-                        "<span class='collapse'> collapse </span>|"                         + 
-                        "<span class='edit'> edit </span>|"                                 + 
-                        "<span class='add'> add </span>|"                                   + 
-                        "<span class='remove'> remove </span>"                              + 
-                    "</li>"                                                                 +  
+                    hierarchyView.generateNodeListElement(nodeId004, "node004")                           +
+                    hierarchyView.generateNodeListElement(nodeId002, "node002")                           +  
                     "<ul>"                                                                  +
-                        "<li>"                                                              +
-                            "<div class='node' id='"+nodeId003+"' style='font-weight: bold;'>"    + 
-                                "node003"                                                   + 
-                            "</div>"                                                        +
-                            "<span class='collapse'> collapse </span>|"                     + 
-                            "<span class='edit'> edit </span>|"                             + 
-                            "<span class='add'> add </span>|"                               + 
-                            "<span class='remove'> remove </span>"                          + 
-                        "</li>"                                                             +  
+                        hierarchyView.generateNodeListElement(nodeId003, "node003")                       +  
                     "</ul>"                                                                 +
                 "</ul>"                                                                     +
             "</ul>";
     test.equals(html, hierarchyView.displayHierarchyModelHTML(hierarchyModel));
     hierarchyModel.remove(nodeId004);
     html = "<ul>"                                                                           +
-                "<li>"                                                                      +
-                    "<div class='node' id='"+nodeId001+"' style='font-weight: bold;'>"            + 
-                        "node001"                                                           + 
-                    "</div>"                                                                +
-                    "<span class='collapse'> collapse </span>|"                             + 
-                    "<span class='edit'> edit </span>|"                                     + 
-                    "<span class='add'> add </span>|"                                       + 
-                    "<span class='remove'> remove </span>"                                  + 
-                "</li>"                                                                     +     
+                hierarchyView.generateNodeListElement(nodeId001, "node001")                               +     
                 "<ul>"                                                                      +
-                    "<li>"                                                                  +
-                        "<div class='node' id='"+nodeId002+"' style='font-weight: bold;'>"        + 
-                            "node002"                                                       + 
-                        "</div>"                                                            +
-                        "<span class='collapse'> collapse </span>|"                         + 
-                        "<span class='edit'> edit </span>|"                                 + 
-                        "<span class='add'> add </span>|"                                   + 
-                        "<span class='remove'> remove </span>"                              + 
-                    "</li>"                                                                 +  
+                    hierarchyView.generateNodeListElement(nodeId002, "node002")                           +  
                     "<ul>"                                                                  +
-                        "<li>"                                                              +
-                            "<div class='node' id='"+nodeId003+"' style='font-weight: bold;'>"    + 
-                                "node003"                                                   + 
-                            "</div>"                                                        +
-                            "<span class='collapse'> collapse </span>|"                     + 
-                            "<span class='edit'> edit </span>|"                             + 
-                            "<span class='add'> add </span>|"                               + 
-                            "<span class='remove'> remove </span>"                          + 
-                        "</li>"                                                             +  
+                        hierarchyView.generateNodeListElement(nodeId003, "node003")                       +  
                     "</ul>"                                                                 +
                 "</ul>"                                                                     +
             "</ul>";
