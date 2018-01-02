@@ -83,10 +83,12 @@ var HierarchyView = (function () {
     HierarchyView.prototype.generateNodeListElement = function (nodeId, nodeName) {
         return "" +
             "<li>" +
-            "<div class='node' id='" + nodeId + "' " + this.generateNodeStyle() + ">" +
+            "<div class='node' id='" + nodeId + "'>" +
+            "<span class='node-name' " + this.generateNodeStyle() + ">" +
             nodeName +
-            "</div>" +
+            "</span>" +
             this.generateNodeButtons() +
+            "</div>" +
             "</li>";
     };
     HierarchyView.prototype.generateNodeStyle = function () {
@@ -106,29 +108,30 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.initLogic = function (hierarchyController) {
         $(".collapse").on("click", function (e) {
-            var nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            var nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.collapseNode(nodeId);
         });
         $(".edit").on("click", function (e) {
-            var nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            var nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.edit(nodeId);
         });
         $(".add").on("click", function (e) {
-            var nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            var nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.add(nodeId);
         });
         $(".remove").on("click", function (e) {
-            var nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            var nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.remove(nodeId);
         });
     };
     HierarchyView.prototype.edit = function (nodeId, hierarchyController) {
-        var node = $(".node#" + nodeId);
+        var node = $("#" + nodeId);
+        var nodeName = node.find(".node-name").text();
         var html = "" +
-            "<input placeholder='" + node.text() + "'>" +
+            "<input placeholder='" + nodeName + "'>" +
             "<button class='save'>Save</button>" +
             "<button class='cancel'>Cancel</button>";
-        $("#" + nodeId).html(html);
+        node.html(html);
         node.find(".cancel").on("click", function () {
             hierarchyController.display();
         });

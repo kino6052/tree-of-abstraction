@@ -95,10 +95,13 @@ class HierarchyView {
     generateNodeListElement(nodeId:String, nodeName:String){
         return ""                                                                                       +
             "<li>"                                                                                      +
-                "<div class='node' id='"+nodeId+"' "+this.generateNodeStyle()+">"                       + 
-                    nodeName                                                                            + 
+                "<div class='node' id='"+nodeId+"'>"                                                    +
+                    "<span class='node-name' "+this.generateNodeStyle()+">"                             +
+                        nodeName                                                                        +
+                    "</span>"                                                                           +
+                    this.generateNodeButtons()                                                          +
                 "</div>"                                                                                +
-                this.generateNodeButtons()                                                              +
+                
             "</li>"
     }
     generateNodeStyle(){
@@ -120,30 +123,31 @@ class HierarchyView {
     
     initLogic(hierarchyController: HierarchyController){
         $(".collapse").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.collapseNode(nodeId);
         })
         $(".edit").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.edit(nodeId);
         })
         $(".add").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.add(nodeId);
         })
         $(".remove").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).siblings(".node")[0].id;
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.remove(nodeId);
         })
     }
     
     edit(nodeId: String, hierarchyController: HierarchyController){
-        let node = $(".node#" + nodeId);
+        let node = $("#"+nodeId);
+        let nodeName = node.find(".node-name").text();
         let html = ""                                   +
-            "<input placeholder='" + node.text() + "'>" +
+            "<input placeholder='" + nodeName + "'>" +
             "<button class='save'>Save</button>"        + 
             "<button class='cancel'>Cancel</button>";
-        $("#" + nodeId).html(html);
+        node.html(html);
         node.find(".cancel").on("click", ()=>{
             hierarchyController.display();
         });
