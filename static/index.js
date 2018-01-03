@@ -47,6 +47,9 @@ var HierarchyController = (function () {
         this.hierarchyModel.updateNodeName(nodeId, newNodeName);
         this.display();
     };
+    HierarchyController.prototype.saveContent = function (nodeId, newContent) {
+        this.hierarchyModel.save(nodeId, String, newContent, String);
+    };
     HierarchyController.prototype.add = function (nodeId) {
         this.hierarchyModel.add(new HierarchyNode("New Node", []), nodeId, String);
         this.display();
@@ -348,6 +351,10 @@ var NoteMenuModel = (function () {
         }
         return null;
     };
+    NoteMenuModel.prototype.updateNoteContent = function (noteId, newContent) {
+        var node = this.findNode(noteId);
+        node.content = newContent;
+    };
     return NoteMenuModel;
 }());
 var NoteMenuController = (function () {
@@ -367,6 +374,9 @@ var NoteMenuController = (function () {
         this.noteMenuModel.updateNodeName(nodeId, newNodeName);
         this.display();
     };
+    NoteMenuController.prototype.updateNoteContent = function (nodeId, newContent) {
+        this.noteMenuModel.updateNoteContent(nodeId, newContent);
+    };
     NoteMenuController.prototype.add = function (nodeId) {
         this.noteMenuModel.add(new NoteNode("New Note", []));
         this.display();
@@ -377,6 +387,9 @@ var NoteMenuController = (function () {
     };
     NoteMenuController.prototype.displayNote = function (nodeId) {
         this.noteMenuView.displayNote(nodeId, this);
+    };
+    NoteMenuController.prototype.findNote = function (noteId) {
+        return this.noteMenuModel.findNode(noteId);
     };
     return NoteMenuController;
 }());
@@ -429,7 +442,7 @@ var NoteMenuView = (function () {
         $(".note-name").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
             console.log(nodeId);
-            noteMenuController.displayNote(nodeId);
+            noteMenuController.displayNote(nodeId, noteMenuController);
         });
         $(".collapse").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
@@ -478,7 +491,7 @@ var NoteMenuView = (function () {
             $(".note-content").html(node.content);
         }
         $("#edit-note").on("click", function () {
-            _this.displayEditor(node, noteMenuController);
+            _this.displayEditor(noteId, noteMenuController);
         });
         $("#return-note").on("click", function () {
             noteMenuController.display();
@@ -489,20 +502,21 @@ var NoteMenuView = (function () {
             "<button id='edit-note'>Edit</button>" +
             "<button id='return-note'>Return</button>";
     };
-    NoteMenuView.prototype.displayEditor = function (node, noteMenuController) {
+    NoteMenuView.prototype.displayEditor = function (noteId, noteMenuController) {
         var _this = this;
-        if (node) {
+        var note = noteMenuController.findNote(noteId);
+        if (note) {
             var notesArea = $("#notes-area");
             notesArea.html("<div class='note-view'>" +
                 "<textarea class='note-editor'></textarea>" +
                 this.displayNoteEditorButtons() +
                 "</div>");
-            $(".note-editor").text(node.content);
+            $(".note-editor").val(note.content);
         }
         $("#save-note").on("click", function () {
-            var newContent = $("#note-editor").text();
-            node.content = newContent;
-            _this.displayNote(node.id, noteMenuController); // TODO: Make Controller do This
+            var newContent = $(".note-editor").val();
+            noteMenuController.updateNoteContent(noteId, newContent);
+            _this.displayNote(noteId, noteMenuController);
         });
         $("#cancel-note").on("click", function () {
             noteMenuController.display();
@@ -575,6 +589,20 @@ exports.NOTE_MENU_MODEL_RemoveTest = function (test) {
     noteMenuModel.add(newNode);
     noteMenuModel.remove(newNode.id);
     test.ok(0 === noteMenuModel.notes.length);
+    test.done();
+};
+exports.NOTE_MENU_MODEL_UpdateNoteContent = function (test) {
+    var noteMenuModel = new NoteMenuModel({
+        name: "note001",
+        id: generateUniqueHashId(),
+        visible: true,
+        articleId: null,
+        labelIds: []
+    });
+    var newNode = new NoteNode("node002");
+    noteMenuModel.add(newNode);
+    noteMenuModel.updateNoteContent(newNode.id, "Content");
+    test.equals("Content", noteMenuModel.notes[0].content);
     test.done();
 };
 exports.HIERARCHY_MODEL_JsonToTreeTest = function (test) {

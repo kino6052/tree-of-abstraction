@@ -49,6 +49,9 @@ class HierarchyController {
         this.hierarchyModel.updateNodeName(nodeId, newNodeName);
         this.display();
     }
+    saveContent(nodeId:String, newContent:String){
+        this.hierarchyModel.save(nodeId:String, newContent:String);
+    }
     add(nodeId:String){
         this.hierarchyModel.add(new HierarchyNode("New Node", []), nodeId:String);
         this.display();
@@ -347,6 +350,10 @@ class NoteMenuModel {
         }
         return null;
     }
+    updateNoteContent(noteId:String, newContent:String){
+        let node = this.findNode(noteId);
+        node.content = newContent;
+    }
 }
 
 class NoteMenuController {
@@ -368,6 +375,9 @@ class NoteMenuController {
         this.noteMenuModel.updateNodeName(nodeId, newNodeName);
         this.display();
     }
+    updateNoteContent(nodeId:String, newContent:String){
+        this.noteMenuModel.updateNoteContent(nodeId, newContent);
+    }
     add(nodeId:String){
         this.noteMenuModel.add(new NoteNode("New Note", []));
         this.display();
@@ -378,6 +388,9 @@ class NoteMenuController {
     }
     displayNote(nodeId:String){
         this.noteMenuView.displayNote(nodeId, this);
+    }
+    findNote(noteId:String){
+        return this.noteMenuModel.findNode(noteId);
     }
 }
 
@@ -432,7 +445,7 @@ class NoteMenuView {
         $(".note-name").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
             console.log(nodeId);
-            noteMenuController.displayNote(nodeId);
+            noteMenuController.displayNote(nodeId, noteMenuController);
         })
         $(".collapse").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
@@ -482,7 +495,7 @@ class NoteMenuView {
             $(".note-content").html(node.content);
         }
         $("#edit-note").on("click", ()=>{
-            this.displayEditor(node, noteMenuController);
+            this.displayEditor(noteId, noteMenuController);
         });
         $("#return-note").on("click", ()=>{
             noteMenuController.display();
@@ -493,8 +506,9 @@ class NoteMenuView {
             "<button id='edit-note'>Edit</button>" +
             "<button id='return-note'>Return</button>"
     }
-    displayEditor(node:NoteNode, noteMenuController:NoteMenuController){
-        if (node) {
+    displayEditor(noteId:String, noteMenuController:NoteMenuController){
+        let note = noteMenuController.findNote(noteId);
+        if (note) {
             let notesArea = $("#notes-area");
             notesArea.html(
                 "<div class='note-view'>"                           +
@@ -502,12 +516,12 @@ class NoteMenuView {
                     this.displayNoteEditorButtons()                 +
                 "</div>"
             );
-            $(".note-editor").text(node.content);
+            $(".note-editor").val(note.content);
         }
         $("#save-note").on("click", ()=>{
-            let newContent = $("#note-editor").text();
-            node.content = newContent; // TODO: Make Controller do This
-            this.displayNote(node.id, noteMenuController); // TODO: Make Controller do This
+            let newContent = $(".note-editor").val();
+            noteMenuController.updateNoteContent(noteId, newContent);
+            this.displayNote(noteId, noteMenuController);
         });
         $("#cancel-note").on("click", ()=>{
             noteMenuController.display();
@@ -589,6 +603,23 @@ exports.NOTE_MENU_MODEL_RemoveTest = function(test) {
     noteMenuModel.remove(newNode.id);
     
     test.ok(0===noteMenuModel.notes.length);
+    test.done();
+}
+
+exports.NOTE_MENU_MODEL_UpdateNoteContent = function(test) {
+    let noteMenuModel = new NoteMenuModel({
+        name: "note001",
+        id: generateUniqueHashId(),
+        visible: true,
+        articleId: null,
+        labelIds: []
+    });
+    
+    let newNode = new NoteNode("node002");
+    noteMenuModel.add(newNode);
+    noteMenuModel.updateNoteContent(newNode.id, "Content");
+    
+    test.equals("Content", noteMenuModel.notes[0].content);
     test.done();
 }
 
