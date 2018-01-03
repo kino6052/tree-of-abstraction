@@ -466,13 +466,52 @@ var NoteMenuView = (function () {
         });
     };
     NoteMenuView.prototype.displayNote = function (noteId, noteMenuController) {
+        var _this = this;
         var node = noteMenuController.noteMenuModel.findNode(noteId);
         console.log(node);
         if (node) {
             var notesArea = $("#notes-area");
-            notesArea.html("<textarea></textarea");
-            notesArea.find("textarea").text(node.content);
+            notesArea.html("<div class='note-view'>" +
+                "<div class='note-content'></div>" +
+                this.displayNoteContentButtons() +
+                "</div>");
+            $(".note-content").html(node.content);
         }
+        $("#edit-note").on("click", function () {
+            _this.displayEditor(node, noteMenuController);
+        });
+        $("#return-note").on("click", function () {
+            noteMenuController.display();
+        });
+    };
+    NoteMenuView.prototype.displayNoteContentButtons = function () {
+        return "" +
+            "<button id='edit-note'>Edit</button>" +
+            "<button id='return-note'>Return</button>";
+    };
+    NoteMenuView.prototype.displayEditor = function (node, noteMenuController) {
+        var _this = this;
+        if (node) {
+            var notesArea = $("#notes-area");
+            notesArea.html("<div class='note-view'>" +
+                "<textarea class='note-editor'></textarea>" +
+                this.displayNoteEditorButtons() +
+                "</div>");
+            $(".note-editor").text(node.content);
+        }
+        $("#save-note").on("click", function () {
+            var newContent = $("#note-editor").text();
+            node.content = newContent;
+            _this.displayNote(node.id, noteMenuController); // TODO: Make Controller do This
+        });
+        $("#cancel-note").on("click", function () {
+            noteMenuController.display();
+        });
+    };
+    NoteMenuView.prototype.displayNoteEditorButtons = function () {
+        return "" +
+            "<button id='save-note'>Save</button>" +
+            "<button id='cancel-note'>Cancel</button>";
     };
     return NoteMenuView;
 }());

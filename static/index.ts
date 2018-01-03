@@ -104,9 +104,9 @@ class HierarchyView {
     }
     generateNodeListElement(nodeId:String, nodeName:String){
         return ""                                                                                       +
-            "<li "+this.generateNodeStyle()+">"                                                                                      +
+            "<li "+this.generateNodeStyle()+">"                                                         +
                 "<div class='node' id='"+nodeId+"'>"                                                    +
-                    "<span class='node-name' "+this.generateNodeNameStyle()+">"                             +
+                    "<span class='node-name' "+this.generateNodeNameStyle()+">"                         +
                         nodeName                                                                        +
                     "</span>"                                                                           +
                     this.generateNodeButtons()                                                          +
@@ -473,9 +473,50 @@ class NoteMenuView {
         console.log(node);
         if (node) {
             let notesArea = $("#notes-area");
-            notesArea.html("<textarea></textarea");
-            notesArea.find("textarea").text(node.content);
+            notesArea.html(
+                "<div class='note-view'>"                   +
+                    "<div class='note-content'></div>"      +
+                    this.displayNoteContentButtons()        +
+                "</div>"
+            );
+            $(".note-content").html(node.content);
         }
+        $("#edit-note").on("click", ()=>{
+            this.displayEditor(node, noteMenuController);
+        });
+        $("#return-note").on("click", ()=>{
+            noteMenuController.display();
+        });
+    }
+    displayNoteContentButtons(){
+        return "" +
+            "<button id='edit-note'>Edit</button>" +
+            "<button id='return-note'>Return</button>"
+    }
+    displayEditor(node:NoteNode, noteMenuController:NoteMenuController){
+        if (node) {
+            let notesArea = $("#notes-area");
+            notesArea.html(
+                "<div class='note-view'>"                           +
+                    "<textarea class='note-editor'></textarea>"     +
+                    this.displayNoteEditorButtons()                 +
+                "</div>"
+            );
+            $(".note-editor").text(node.content);
+        }
+        $("#save-note").on("click", ()=>{
+            let newContent = $("#note-editor").text();
+            node.content = newContent; // TODO: Make Controller do This
+            this.displayNote(node.id, noteMenuController); // TODO: Make Controller do This
+        });
+        $("#cancel-note").on("click", ()=>{
+            noteMenuController.display();
+        });
+    }
+    displayNoteEditorButtons(){
+        return "" + 
+            "<button id='save-note'>Save</button>" +
+            "<button id='cancel-note'>Cancel</button>"
     }
 }
 
