@@ -306,6 +306,7 @@ var NoteNode = (function (_super) {
         this.name = name;
         this.id = generateUniqueHashId();
         this.visible = true;
+        this.content = "";
     }
     return NoteNode;
 }(BaseNode));
@@ -320,6 +321,9 @@ var NoteMenuModel = (function () {
             var note = noteList_1[_i];
             if (note.hasOwnProperty("name")) {
                 noteNode = new NoteNode(note.name);
+                if (note.hasOwnProperty("content")) {
+                    noteNode.content = note.content;
+                }
                 notes.unshift(noteNode);
             }
         }
@@ -346,6 +350,132 @@ var NoteMenuModel = (function () {
     };
     return NoteMenuModel;
 }());
+var NoteMenuController = (function () {
+    function NoteMenuController(noteMenuModel, noteMenuView) {
+        this.noteMenuModel = noteMenuModel;
+        this.noteMenuView = noteMenuView;
+        this.display();
+    }
+    NoteMenuController.prototype.display = function () {
+        this.noteMenuView.display(this.noteMenuModel);
+        this.noteMenuView.initLogic(this);
+    };
+    NoteMenuController.prototype.edit = function (nodeId) {
+        this.noteMenuView.edit(nodeId, this);
+    };
+    NoteMenuController.prototype.updateNodeName = function (nodeId, newNodeName) {
+        this.noteMenuModel.updateNodeName(nodeId, newNodeName);
+        this.display();
+    };
+    NoteMenuController.prototype.add = function (nodeId) {
+        this.noteMenuModel.add(new NoteNode("New Note", []));
+        this.display();
+    };
+    NoteMenuController.prototype.remove = function (nodeId) {
+        this.noteMenuModel.remove(nodeId, String);
+        this.display();
+    };
+    NoteMenuController.prototype.displayNote = function (nodeId) {
+        this.noteMenuView.displayNote(nodeId, this);
+    };
+    return NoteMenuController;
+}());
+var NoteMenuView = (function () {
+    function NoteMenuView(noteMenuWindow) {
+        this.noteMenuWindow = noteMenuWindow;
+    }
+    NoteMenuView.prototype.displayNoteMenuModelHTML = function (noteMenuModel) {
+        var result = "";
+        var notes = noteMenuModel.notes;
+        for (var _i = 0, notes_1 = notes; _i < notes_1.length; _i++) {
+            var note = notes_1[_i];
+            result += this.displayNoteHTML(note);
+        }
+        return "<ul>" + result + "</ul>";
+    };
+    NoteMenuView.prototype.displayNoteHTML = function (node) {
+        return this.generateNodeListElement(node.id, node.name);
+    };
+    NoteMenuView.prototype.generateNodeStyle = function () {
+        return "style='width: 200px;'";
+    };
+    NoteMenuView.prototype.generateNodeListElement = function (nodeId, nodeName) {
+        return "" +
+            "<li " + this.generateNodeStyle() + ">" +
+            "<div class='note' id='" + nodeId + "'>" +
+            "<span class='note-name' " + this.generateNodeNameStyle() + ">" +
+            nodeName +
+            "</span>" +
+            this.generateNodeButtons() +
+            "</div>" +
+            "</li>";
+    };
+    NoteMenuView.prototype.generateNodeNameStyle = function () {
+        return "style='font-weight: bold;'";
+    };
+    NoteMenuView.prototype.generateNodeButtons = function () {
+        return "" +
+            "<div class='node-buttons'>" +
+            "<span class='collapse'> collapse </span>|" +
+            "<span class='edit'> edit </span>|" +
+            "<span class='add'> add </span>|" +
+            "<span class='remove'> remove </span>" +
+            "</div>";
+    };
+    NoteMenuView.prototype.display = function (noteMenuModel) {
+        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(noteMenuModel));
+    };
+    NoteMenuView.prototype.initLogic = function (noteMenuController) {
+        $(".note-name").on("click", function (e) {
+            var nodeId = $(e.currentTarget).parents(".note")[0].id;
+            console.log(nodeId);
+            noteMenuController.displayNote(nodeId);
+        });
+        $(".collapse").on("click", function (e) {
+            var nodeId = $(e.currentTarget).parents(".note")[0].id;
+            noteMenuController.collapseNode(nodeId);
+        });
+        $(".edit").on("click", function (e) {
+            var nodeId = $(e.currentTarget).parents(".note")[0].id;
+            noteMenuController.edit(nodeId);
+        });
+        $(".add").on("click", function (e) {
+            var nodeId = $(e.currentTarget).parents(".note")[0].id;
+            noteMenuController.add(nodeId);
+        });
+        $(".remove").on("click", function (e) {
+            var nodeId = $(e.currentTarget).parents(".note")[0].id;
+            noteMenuController.remove(nodeId);
+        });
+    };
+    NoteMenuView.prototype.edit = function (nodeId, noteMenuController) {
+        var node = $("#" + nodeId);
+        var nodeName = node.find(".node-name").text();
+        var html = "" +
+            "<input placeholder='" + nodeName + "'>" +
+            "<button class='save'>Save</button>" +
+            "<button class='cancel'>Cancel</button>";
+        node.html(html);
+        node.find(".cancel").on("click", function () {
+            noteMenuController.display();
+        });
+        node.find(".save").on("click", function () {
+            var newNodeName = node.find("input").val();
+            noteMenuController.updateNodeName(nodeId, newNodeName);
+            noteMenuController.display();
+        });
+    };
+    NoteMenuView.prototype.displayNote = function (noteId, noteMenuController) {
+        var node = noteMenuController.noteMenuModel.findNode(noteId);
+        console.log(node);
+        if (node) {
+            var notesArea = $("#notes-area");
+            notesArea.html("<textarea></textarea");
+            notesArea.find("textarea").text(node.content);
+        }
+    };
+    return NoteMenuView;
+}());
 var hierarchyModel = new HierarchyModel({
     name: "ROOT",
     id: generateUniqueHashId(),
@@ -355,6 +485,15 @@ var hierarchyModel = new HierarchyModel({
 });
 var hierarchyView = new HierarchyView($("#hierarchy-area"));
 var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+var noteMenuModel = new NoteMenuModel([
+    {
+        name: "Note001",
+        id: generateUniqueHashId(),
+        content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+    }
+]);
+var noteMenuView = new NoteMenuView($("#notes-area"));
+var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function (test) {
     var noteMenuModel = new NoteMenuModel([{
