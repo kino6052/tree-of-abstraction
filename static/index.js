@@ -33,7 +33,7 @@ var HierarchyController = (function () {
         this.display();
     }
     HierarchyController.prototype.display = function () {
-        this.hierarchyView.display(this.hierarchyModel);
+        this.hierarchyView.display(this);
         this.hierarchyView.initLogic(this);
     };
     HierarchyController.prototype.collapseNode = function (nodeId) {
@@ -50,12 +50,20 @@ var HierarchyController = (function () {
     HierarchyController.prototype.saveContent = function (nodeId, newContent) {
         this.hierarchyModel.save(nodeId, String, newContent, String);
     };
-    HierarchyController.prototype.add = function (nodeId) {
-        this.hierarchyModel.add(new HierarchyNode("New Node", []), nodeId, String);
+    HierarchyController.prototype.add = function (newNode, nodeId) {
+        this.hierarchyModel.add(newNode, nodeId, String);
         this.display();
     };
     HierarchyController.prototype.remove = function (nodeId) {
         this.hierarchyModel.remove(nodeId, String);
+        this.display();
+    };
+    HierarchyController.prototype.findAsList = function (nameSubstring) {
+        var searchResult = this.hierarchyModel.findAsList(nameSubstring);
+        return searchResult || [];
+    };
+    HierarchyController.prototype.findByCollapsingHierarchy = function (nameSubstring) {
+        this.hierarchyModel.findByCollapsingHierarchy(nameSubstring);
         this.display();
     };
     return HierarchyController;
@@ -64,6 +72,16 @@ var HierarchyView = (function () {
     function HierarchyView(hierarchyWindow) {
         this.hierarchyWindow = hierarchyWindow;
     }
+    HierarchyView.prototype.displayHierarchyView = function (hierarchyController) {
+        var hierarchyModel = hierarchyController.hierarchyModel;
+        return "" +
+            "<div id='search-area'>" +
+            this.displaySearchBar() +
+            "</div>" +
+            "<div id='hierarchy-view'>" +
+            this.displayHierarchyModelHTML(hierarchyModel) +
+            "</div>";
+    };
     HierarchyView.prototype.displayHierarchyModelHTML = function (hierarchyModel) {
         var _this = this;
         var result = "";
@@ -85,7 +103,15 @@ var HierarchyView = (function () {
         for (var i = 0; i < previousIndentAmount; i++) {
             result += "</ul>";
         }
-        return "<ul>" + result + "</ul>";
+        return "" +
+            "<ul>" +
+            result +
+            "</ul>";
+    };
+    HierarchyView.prototype.displaySearchBar = function () {
+        return "" +
+            "<input id='hierarchy-search-input' placeholder='Search'></input>" +
+            "<button id='hierarchy-search-button'>Search</button>";
     };
     HierarchyView.prototype.displayNodeHTML = function (node) {
         if (node.visible) {
@@ -121,8 +147,8 @@ var HierarchyView = (function () {
             "<span class='remove'> remove </span>" +
             "</div>";
     };
-    HierarchyView.prototype.display = function (hierarchyModel) {
-        this.hierarchyWindow.html(this.displayHierarchyModelHTML(hierarchyModel));
+    HierarchyView.prototype.display = function (hierarchyController) {
+        this.hierarchyWindow.html(this.displayHierarchyView(hierarchyController));
     };
     HierarchyView.prototype.initLogic = function (hierarchyController) {
         $(".collapse").on("click", function (e) {
@@ -135,11 +161,19 @@ var HierarchyView = (function () {
         });
         $(".add").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".node")[0].id;
-            hierarchyController.add(nodeId);
+            hierarchyController.add(new HierarchyNode("New Node", []), nodeId);
         });
         $(".remove").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.remove(nodeId);
+        });
+        $("#hierarchy-search-button").on("click", function (e) {
+            console.log("test");
+            var $button = $(e.currentTarget);
+            var $input = $button.siblings("#hierarchy-search-input");
+            var input = $input.val();
+            console.log("Input: ", input);
+            hierarchyController.findByCollapsingHierarchy(input);
         });
     };
     HierarchyView.prototype.edit = function (nodeId, hierarchyController) {
@@ -288,6 +322,56 @@ var HierarchyModel = (function () {
     HierarchyModel.prototype.updateNodeName = function (nodeId, newNodeName) {
         var node = this.findNode(this.hierarchyRoot, nodeId);
         node.name = newNodeName;
+    };
+    HierarchyModel.prototype.containsSubstring = function (str, substr) {
+        return str.toLowerCase().indexOf(substr.toLowerCase()) !== -1;
+    };
+    HierarchyModel.prototype.findAsList = function (nameSubstring) {
+        var _this = this;
+        var result = [];
+        this.iterate(this.hierarchyRoot, function (currentNode) {
+            if (_this.containsSubstring(currentNode.name, nameSubstring)) {
+                result.push(currentNode);
+            }
+        }, 0);
+        return result;
+    };
+    HierarchyModel.prototype.findByCollapsingHierarchy = function (nameSubstring) {
+        var _this = this;
+        var hasVisibleChildren = function (node) {
+            var result = false;
+            for (var _i = 0, _a = node.children; _i < _a.length; _i++) {
+                var child = _a[_i];
+            }
+        };
+        this.iterateFromTail(this.hierarchyRoot, function (child, parent) {
+            if (child.children.length === 0) {
+                if (_this.containsSubstring(child.name, nameSubstring)) {
+                    child.visible = true;
+                    parent.visible = true;
+                }
+                else {
+                    child.visible = false;
+                    parent.visible = false;
+                }
+            }
+            else {
+                if (child.visible) {
+                    parent.visible = true;
+                }
+                else if (_this.containsSubstring(child.name, nameSubstring)) {
+                    child.visible = true;
+                    parent.visible = true;
+                }
+            }
+        });
+    };
+    HierarchyModel.prototype.iterateFromTail = function (currentNode, callback) {
+        for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
+            var child = _a[_i];
+            this.iterateFromTail(child, callback);
+            callback(child, currentNode);
+        }
     };
     return HierarchyModel;
 }());
@@ -657,6 +741,60 @@ exports.HIERARCHY_MODEL_UpdateNode = function (test) {
         children: []
     });
     hierarchyModel.updateNodeName(hierarchyModel.hierarchyRoot.id, "Test");
+    test.done();
+};
+exports.HIERARCHY_CONTROLLER_FindAsList = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var newNode = new HierarchyNode("node002", []);
+    hierarchyController.add(newNode, hierarchyModel.hierarchyRoot.id);
+    var results = hierarchyController.findAsList("node");
+    test.equals(2, results.length);
+    results = hierarchyController.findAsList("001");
+    test.equals(1, results.length);
+    results = hierarchyController.findAsList("003");
+    test.equals(0, results.length);
+    test.done();
+};
+exports.HIERARCHY_CONTROLLER_FindByCollapsingHierarchy = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    hierarchyController.findByCollapsingHierarchy("test");
+    test.equals(false, hierarchyModel.hierarchyRoot.visible);
+    test.equals(false, hierarchyModel.hierarchyRoot.visible);
+    hierarchyController.display();
+    var node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    hierarchyController.findByCollapsingHierarchy("Test");
+    test.equals(true, hierarchyModel.hierarchyRoot.visible);
+    test.equals(true, hierarchyModel.hierarchyRoot.children[0].visible);
+    test.equals(true, hierarchyModel.hierarchyRoot.children[0].children[0].visible);
+    hierarchyController.findByCollapsingHierarchy("test");
+    test.equals(true, hierarchyModel.hierarchyRoot.visible);
+    test.equals(true, hierarchyModel.hierarchyRoot.children[0].visible);
+    test.equals(true, hierarchyModel.hierarchyRoot.children[0].children[0].visible);
+    hierarchyController.findByCollapsingHierarchy("node002");
+    test.equals(true, hierarchyModel.hierarchyRoot.visible);
+    test.equals(true, hierarchyModel.hierarchyRoot.children[0].visible);
+    test.equals(false, hierarchyModel.hierarchyRoot.children[0].children[0].visible);
     test.done();
 };
 exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function (test) {
