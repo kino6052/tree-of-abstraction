@@ -6,9 +6,13 @@ let $ = $ || function(){
         },
         on: function(){
             return;
-        }
+        },
     }
 };
+
+$.get = $.get || function(){
+    return new Promise((res, rej)=>(res({})));
+}
 
 let toLowerSerpent = function(input: String){
     return input.toLowerCase().split(" ").join("-");
@@ -713,54 +717,49 @@ class NoteMenuView {
     }
 }
 
-let hierarchyModel = new HierarchyModel(
-    {
-        name: "ROOT",
-        id: generateUniqueHashId(),
-        collapsed: false,
-        visible: true,
-        children: []
-    }
-)
-
-// Initialize Application
-let hierarchyView = new HierarchyView($("#hierarchy-area"));
-let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
-let noteMenuModel = new NoteMenuModel(
+Promise.all(
     [
-        {
-            name: "Note001",
-            id: generateUniqueHashId(),
-            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
-        }  
+        $.get("/getHierarchy"),
+        $.get("/getNotes")
     ]
-);
-let noteMenuView = new NoteMenuView($("#notes-area"));
-let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
-
-hierarchyController.noteMenuController = noteMenuController;
-noteMenuController.hierarchyController = hierarchyController;
-
-// Global Menu
-$("#application-menu-save").on("click", ()=>{
-    let root = hierarchyController.hierarchyModel.hierarchyRoot;
-    let JSONroot = JSON.stringify(root);
-    $.ajax({
-        type: "POST",
-        url: "/saveHierarchy",
-        data: JSONroot,
-        success: (data) => {console.log("Saved Hierarchy")},
-        dataType: "application/json"
-    })
-    let notes = noteMenuController.noteMenuModel.notes;
-    let JSONnotes = JSON.stringify(notes);
-    $.ajax({
-        type: "POST",
-        url: "/saveHierarchy",
-        data: JSONroot,
-        success: (data) => {console.log("Saved Hierarchy")},
-        dataType: "application/json"
-    })
+).then((results)=>{
+   let hierarchyModel = new HierarchyModel(
+        JSON.parse(results[0])
+    )
+    
+    // Initialize Application
+    let hierarchyView = new HierarchyView($("#hierarchy-area"));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let noteMenuModel = new NoteMenuModel(
+        JSON.parse(results[1])
+    );
+    let noteMenuView = new NoteMenuView($("#notes-area"));
+    let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    
+    hierarchyController.noteMenuController = noteMenuController;
+    noteMenuController.hierarchyController = hierarchyController;
+    
+    // Global Menu
+    $("#application-menu-save").on("click", ()=>{
+        let root = hierarchyController.hierarchyModel.hierarchyRoot;
+        let JSONroot = JSON.stringify(root);
+        $.ajax({
+            type: "POST",
+            url: "/saveHierarchy",
+            data: JSONroot,
+            success: (data) => {console.log("Saved Hierarchy")},
+            dataType: "application/json"
+        })
+        let notes = noteMenuController.noteMenuModel.notes;
+        let JSONnotes = JSON.stringify(notes);
+        $.ajax({
+            type: "POST",
+            url: "/saveHierarchy",
+            data: JSONroot,
+            success: (data) => {console.log("Saved Hierarchy")},
+            dataType: "application/json"
+        })
+    }); 
 });
 
 

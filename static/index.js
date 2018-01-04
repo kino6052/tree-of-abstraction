@@ -14,6 +14,9 @@ var $ = $ || function () {
         }
     };
 };
+$.get = $.get || function () {
+    return new Promise(function (res, rej) { return (res({})); });
+};
 var toLowerSerpent = function (input) {
     return input.toLowerCase().split(" ").join("-");
 };
@@ -705,42 +708,40 @@ var NoteMenuView = (function () {
     };
     return NoteMenuView;
 }());
-var hierarchyModel = new HierarchyModel({
-    name: "ROOT",
-    id: generateUniqueHashId(),
-    collapsed: false,
-    visible: true,
-    children: []
-});
-// Initialize Application
-var hierarchyView = new HierarchyView($("#hierarchy-area"));
-var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
-var noteMenuModel = new NoteMenuModel([
-    {
-        name: "Note001",
-        id: generateUniqueHashId(),
-        content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
-    }
-]);
-var noteMenuView = new NoteMenuView($("#notes-area"));
-var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
-hierarchyController.noteMenuController = noteMenuController;
-noteMenuController.hierarchyController = hierarchyController;
-// Global Menu
-$("#application-menu-export").on("click", function () {
-    var root = hierarchyController.hierarchyModel.hierarchyRoot;
-    var JSONroot = JSON.stringify(root);
-    console.log(JSONroot);
-    var notes = noteMenuController.noteMenuModel.notes;
-    var JSONnotes = JSON.stringify(notes);
-    console.log(JSONnotes);
-});
-$("#application-menu-import").on("click", function () {
-    hierarchyController.hierarchyModel.hierarchyRoot = globalRoot;
-    noteMenuController.noteMenuModel.notes = globalNotes;
-    noteMenuController.display();
-    hierarchyController.display();
-    $("#application-menu-import").remove();
+Promise.all([
+    $.get("/getHierarchy"),
+    $.get("/getNotes")
+]).then(function (results) {
+    var hierarchyModel = new HierarchyModel(JSON.parse(results[0]));
+    // Initialize Application
+    var hierarchyView = new HierarchyView($("#hierarchy-area"));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var noteMenuModel = new NoteMenuModel(JSON.parse(results[1]));
+    var noteMenuView = new NoteMenuView($("#notes-area"));
+    var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    hierarchyController.noteMenuController = noteMenuController;
+    noteMenuController.hierarchyController = hierarchyController;
+    // Global Menu
+    $("#application-menu-save").on("click", function () {
+        var root = hierarchyController.hierarchyModel.hierarchyRoot;
+        var JSONroot = JSON.stringify(root);
+        $.ajax({
+            type: "POST",
+            url: "/saveHierarchy",
+            data: JSONroot,
+            success: function (data) { console.log("Saved Hierarchy"); },
+            dataType: "application/json"
+        });
+        var notes = noteMenuController.noteMenuModel.notes;
+        var JSONnotes = JSON.stringify(notes);
+        $.ajax({
+            type: "POST",
+            url: "/saveHierarchy",
+            data: JSONroot,
+            success: function (data) { console.log("Saved Hierarchy"); },
+            dataType: "application/json"
+        });
+    });
 });
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function (test) {
