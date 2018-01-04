@@ -29,6 +29,7 @@ class BaseNode {
 class HierarchyController {
     hierarchyModel: HierarchyModel
     hierarchyView: HierarchyView
+    noteMenuController: NoteMenuController
     constructor(hierarchyModel: HierarchyModel, hierarchyView: HierarchyView) {
         this.hierarchyModel = hierarchyModel;
         this.hierarchyView = hierarchyView;
@@ -60,6 +61,10 @@ class HierarchyController {
         this.hierarchyModel.remove(nodeId:String);
         this.display();
     }
+    find(nodeId:String){
+        let hierarchyRoot = this.hierarchyModel.hierarchyRoot;
+        return this.hierarchyModel.findNode(hierarchyRoot, nodeId);
+    }
     findAsList(nameSubstring:String){
         let searchResult = this.hierarchyModel.findAsList(nameSubstring);
         return searchResult || [];
@@ -67,6 +72,11 @@ class HierarchyController {
     findByCollapsingHierarchy(nameSubstring:String){
         this.hierarchyModel.findByCollapsingHierarchy(nameSubstring);
         this.display();
+    }
+    addNoteId(hierarchyNodeId: String, noteNodeId: String){
+        let hierarchyNode = this.find(hierarchyNodeId);
+        console.log(hierarchyNodeId, hierarchyNode, this.hierarchyModel.hierarchyRoot);
+        hierarchyNode.noteIds.push(noteNodeId);
     }
 }
 
@@ -371,24 +381,28 @@ class HierarchyModel {
 }
 
 class HierarchyNode extends BaseNode {
-    collapsed: Boolean
+    collapsed: Boolean;
     children: Array<BaseNode>;
+    noteIds: Array<String>;
     constructor(name: string, children: Array<HierarchyNode>){
         this.name = name;
         this.id = generateUniqueHashId();
         this.children = children;
         this.visible = true;
         this.collapsed = false;
+        this.noteIds = [];
     }
 }
 
 // Notes Classes
 class NoteNode extends BaseNode {
+    labelIds: Array<String>
     constructor(name: string){
         this.name = name;
         this.id = generateUniqueHashId();
         this.visible = true;
         this.content = "";
+        this.labelIds = [];
     }
 }
 
@@ -438,6 +452,7 @@ class NoteMenuModel {
 class NoteMenuController {
     noteMenuModel: NoteMenuModel
     noteMenuView: NoteMenuView
+    hierarchyController: HierarchyController
     constructor(noteMenuModel: NoteMenuModel, noteMenuView: NoteMenuView) {
         this.noteMenuModel = noteMenuModel;
         this.noteMenuView = noteMenuView;
@@ -470,6 +485,11 @@ class NoteMenuController {
     }
     findNote(noteId:String){
         return this.noteMenuModel.findNode(noteId);
+    }
+    addLabel(noteNodeId: String, hierarchyNodeId: String){
+        let noteNode = this.findNote(noteNodeId);
+        noteNode.labelIds.push(hierarchyNodeId);
+        this.hierarchyController.addNoteId(hierarchyNodeId, noteNodeId);
     }
 }
 
@@ -636,6 +656,9 @@ let noteMenuModel = new NoteMenuModel(
 let noteMenuView = new NoteMenuView($("#notes-area"));
 let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
 
+hierarchyController.noteMenuController = noteMenuController;
+noteMenuController.hierarchyController = hierarchyController;
+
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function(test) {
     let noteMenuModel = new NoteMenuModel([{
@@ -699,6 +722,40 @@ exports.NOTE_MENU_MODEL_UpdateNoteContent = function(test) {
     noteMenuModel.updateNoteContent(newNode.id, "Content");
     
     test.equals("Content", noteMenuModel.notes[0].content);
+    test.done();
+}
+
+exports.NOTE_MENU_CONTROLLER_AddLabelToNote = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyView = new HierarchyView($(""));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }  
+    ]);
+    let noteMenuView = new NoteMenuView($(""));
+    let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    let node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    let node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    let noteNode = noteMenuModel.notes[0];
+    console.log(hierarchyController.hierarchyModel.hierarchyRoot);
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
     test.done();
 }
 

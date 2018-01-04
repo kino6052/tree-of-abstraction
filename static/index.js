@@ -58,6 +58,10 @@ var HierarchyController = (function () {
         this.hierarchyModel.remove(nodeId, String);
         this.display();
     };
+    HierarchyController.prototype.find = function (nodeId) {
+        var hierarchyRoot = this.hierarchyModel.hierarchyRoot;
+        return this.hierarchyModel.findNode(hierarchyRoot, nodeId);
+    };
     HierarchyController.prototype.findAsList = function (nameSubstring) {
         var searchResult = this.hierarchyModel.findAsList(nameSubstring);
         return searchResult || [];
@@ -65,6 +69,11 @@ var HierarchyController = (function () {
     HierarchyController.prototype.findByCollapsingHierarchy = function (nameSubstring) {
         this.hierarchyModel.findByCollapsingHierarchy(nameSubstring);
         this.display();
+    };
+    HierarchyController.prototype.addNoteId = function (hierarchyNodeId, noteNodeId) {
+        var hierarchyNode = this.find(hierarchyNodeId);
+        console.log(hierarchyNodeId, hierarchyNode, this.hierarchyModel.hierarchyRoot);
+        hierarchyNode.noteIds.push(noteNodeId);
     };
     return HierarchyController;
 }());
@@ -383,6 +392,7 @@ var HierarchyNode = (function (_super) {
         this.children = children;
         this.visible = true;
         this.collapsed = false;
+        this.noteIds = [];
     }
     return HierarchyNode;
 }(BaseNode));
@@ -394,6 +404,7 @@ var NoteNode = (function (_super) {
         this.id = generateUniqueHashId();
         this.visible = true;
         this.content = "";
+        this.labelIds = [];
     }
     return NoteNode;
 }(BaseNode));
@@ -474,6 +485,11 @@ var NoteMenuController = (function () {
     };
     NoteMenuController.prototype.findNote = function (noteId) {
         return this.noteMenuModel.findNode(noteId);
+    };
+    NoteMenuController.prototype.addLabel = function (noteNodeId, hierarchyNodeId) {
+        var noteNode = this.findNote(noteNodeId);
+        noteNode.labelIds.push(hierarchyNodeId);
+        this.hierarchyController.addNoteId(hierarchyNodeId, noteNodeId);
     };
     return NoteMenuController;
 }());
@@ -631,6 +647,8 @@ var noteMenuModel = new NoteMenuModel([
 ]);
 var noteMenuView = new NoteMenuView($("#notes-area"));
 var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+hierarchyController.noteMenuController = noteMenuController;
+noteMenuController.hierarchyController = hierarchyController;
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function (test) {
     var noteMenuModel = new NoteMenuModel([{
@@ -687,6 +705,39 @@ exports.NOTE_MENU_MODEL_UpdateNoteContent = function (test) {
     noteMenuModel.add(newNode);
     noteMenuModel.updateNoteContent(newNode.id, "Content");
     test.equals("Content", noteMenuModel.notes[0].content);
+    test.done();
+};
+exports.NOTE_MENU_CONTROLLER_AddLabelToNote = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }
+    ]);
+    var noteMenuView = new NoteMenuView($(""));
+    var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    var node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    var noteNode = noteMenuModel.notes[0];
+    console.log(hierarchyController.hierarchyModel.hierarchyRoot);
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
     test.done();
 };
 exports.HIERARCHY_MODEL_JsonToTreeTest = function (test) {
