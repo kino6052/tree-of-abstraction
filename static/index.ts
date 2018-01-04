@@ -1,3 +1,4 @@
+// Globals
 let $ = $ || function(){
     return {
         html: function(){
@@ -713,6 +714,8 @@ let hierarchyModel = new HierarchyModel(
         children: []
     }
 )
+
+// Initialize Application
 let hierarchyView = new HierarchyView($("#hierarchy-area"));
 let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
 let noteMenuModel = new NoteMenuModel(
