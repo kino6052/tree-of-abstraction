@@ -75,7 +75,7 @@ class HierarchyController {
     }
     addNoteId(hierarchyNodeId: String, noteNodeId: String){
         let hierarchyNode = this.find(hierarchyNodeId);
-        console.log(hierarchyNodeId, hierarchyNode, this.hierarchyModel.hierarchyRoot);
+        
         hierarchyNode.noteIds.push(noteNodeId);
     }
 }
@@ -169,6 +169,18 @@ class HierarchyView {
         this.hierarchyWindow.html(this.displayHierarchyView(hierarchyController));
     }
     initLogic(hierarchyController: HierarchyController){
+        $(".node-name").on("click", (e)=>{
+            let $node = $(e.currentTarget);
+            let nodeId = $node.parent(".node").attr("id");
+            let node = hierarchyController.find(nodeId);
+            let noteIds = []
+            if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id){
+                hierarchyController.noteMenuController.display();
+            } else {
+                noteIds = node.noteIds;
+                hierarchyController.noteMenuController.displayNotesByIds(noteIds);
+            }
+        });
         $(".collapse").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".node")[0].id;
             hierarchyController.collapseNode(nodeId);
@@ -186,11 +198,11 @@ class HierarchyView {
             hierarchyController.remove(nodeId);
         })
         $("#hierarchy-search-button").on("click", (e)=>{
-            console.log("test");
+            
             let $button = $(e.currentTarget);
             let $input = $button.siblings("#hierarchy-search-input");
             let input = $input.val();
-            console.log("Input: ", input);
+            
             hierarchyController.findByCollapsingHierarchy(input);
         })
     }
@@ -483,6 +495,16 @@ class NoteMenuController {
     displayNote(nodeId:String){
         this.noteMenuView.displayNote(nodeId, this);
     }
+    displayNotesByIds(noteIds:Array<String>){
+        let notes = [];
+        for (let noteId of noteIds){
+            let note = this.findNote(noteId);
+            notes.unshift(note);
+        }
+        
+        this.noteMenuView.displayNotes(notes, this);
+        this.noteMenuView.initLogic(this);
+    }
     findNote(noteId:String){
         return this.noteMenuModel.findNode(noteId);
     }
@@ -502,10 +524,11 @@ class NoteMenuView {
     constructor(noteMenuWindow: Object){
         this.noteMenuWindow = noteMenuWindow;
     }
-    displayNoteMenuModelHTML(noteMenuController:NoteMenuController){
-        let noteMenuModel = noteMenuController.noteMenuModel;
+    displayNotes(notes:Array<NoteNode>, noteMenuController:NoteMenuController){
+        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(notes, noteMenuController));
+    }
+    displayNoteMenuModelHTML(notes:Array<NoteNode>, noteMenuController:NoteMenuController){
         let result = "";
-        let notes = noteMenuModel.notes;
         for (let note of notes){
             result += this.displayNoteHTML(note, noteMenuController);
         }
@@ -542,13 +565,14 @@ class NoteMenuView {
                 "</div>";
     }
     display(noteMenuController:noteMenuController){
-        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(noteMenuController));
+        let notes = noteMenuController.noteMenuModel.notes;
+        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(notes, noteMenuController));
     }
     initLogic(noteMenuController: NoteMenuController){
         this.noteMenuController = noteMenuController;
         $(".note-name").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
-            console.log(nodeId);
+            
             noteMenuController.displayNote(nodeId, noteMenuController);
         })
         $(".collapse").on("click", (e)=>{
@@ -587,7 +611,7 @@ class NoteMenuView {
     }
     displayNote(noteId:String, noteMenuController: NoteMenuController){
         let node = noteMenuController.noteMenuModel.findNode(noteId);
-        console.log(node);
+        
         if (node) {
             let notesArea = $("#notes-area");
             notesArea.html(
@@ -617,7 +641,7 @@ class NoteMenuView {
             let $input = $("#label-search-input");
             let value = $input.val();
             let labelId = value.split("-")[1];
-            console.log(labelId);
+            
             noteMenuController.addLabel(noteId, labelId);
             this.displayNote(noteId, noteMenuController);
         })
@@ -738,7 +762,7 @@ exports.NOTE_MENU_MODEL_AddTest = function(test) {
 }
 
 exports.NOTE_MENU_MODEL_RemoveTest = function(test) {
-    console.log("hello world");
+    
     let noteMenuModel = new NoteMenuModel({
         name: "note001",
         id: generateUniqueHashId(),
@@ -799,7 +823,7 @@ exports.NOTE_MENU_CONTROLLER_AddLabelToNote = function(test){ // NOTE: It is ver
     let node003 = new HierarchyNode("Test", []);
     hierarchyController.add(node003, node002.id);
     let noteNode = noteMenuModel.notes[0];
-    console.log(hierarchyController.hierarchyModel.hierarchyRoot);
+    
     noteMenuController.addLabel(noteNode.id, node002.id);
     test.equals(node002.id, noteNode.labelIds[0]);
     test.equals(node002.noteIds[0], noteNode.id);
