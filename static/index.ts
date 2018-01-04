@@ -742,21 +742,26 @@ hierarchyController.noteMenuController = noteMenuController;
 noteMenuController.hierarchyController = hierarchyController;
 
 // Global Menu
-$("#application-menu-export").on("click", ()=>{
+$("#application-menu-save").on("click", ()=>{
     let root = hierarchyController.hierarchyModel.hierarchyRoot;
     let JSONroot = JSON.stringify(root);
-    console.log(JSONroot);
+    $.ajax({
+        type: "POST",
+        url: "/saveHierarchy",
+        data: JSONroot,
+        success: (data) => {console.log("Saved Hierarchy")},
+        dataType: "application/json"
+    })
     let notes = noteMenuController.noteMenuModel.notes;
     let JSONnotes = JSON.stringify(notes);
-    console.log(JSONnotes);
+    $.ajax({
+        type: "POST",
+        url: "/saveHierarchy",
+        data: JSONroot,
+        success: (data) => {console.log("Saved Hierarchy")},
+        dataType: "application/json"
+    })
 });
-$("#application-menu-import").on("click", ()=>{
-    hierarchyController.hierarchyModel.hierarchyRoot = globalRoot;
-    noteMenuController.noteMenuModel.notes = globalNotes;
-    noteMenuController.display();
-    hierarchyController.display();
-    $("#application-menu-import").remove();
-})
 
 
 // Node Unit Tests
