@@ -3,6 +3,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+// Globals
 var $ = $ || function () {
     return {
         html: function () {
@@ -704,6 +705,7 @@ var hierarchyModel = new HierarchyModel({
     visible: true,
     children: []
 });
+// Initialize Application
 var hierarchyView = new HierarchyView($("#hierarchy-area"));
 var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
 var noteMenuModel = new NoteMenuModel([
@@ -717,6 +719,12 @@ var noteMenuView = new NoteMenuView($("#notes-area"));
 var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
 hierarchyController.noteMenuController = noteMenuController;
 noteMenuController.hierarchyController = hierarchyController;
+$("#application-menu-hierarchy-json").on("click", function () {
+    console.log(hierarchyController.hierarchyModel.hierarchyRoot);
+});
+$("#application-menu-notes-json").on("click", function () {
+    console.log(noteMenuController.noteMenuModel.notes);
+});
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function (test) {
     var noteMenuModel = new NoteMenuModel([{

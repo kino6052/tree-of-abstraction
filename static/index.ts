@@ -733,6 +733,14 @@ let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
 hierarchyController.noteMenuController = noteMenuController;
 noteMenuController.hierarchyController = hierarchyController;
 
+// Global Menu
+$("#application-menu-hierarchy-json").on("click", ()=>{
+    console.log(hierarchyController.hierarchyModel.hierarchyRoot);
+});
+$("#application-menu-notes-json").on("click", ()=>{
+    console.log(noteMenuController.noteMenuModel.notes);
+})
+
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function(test) {
     let noteMenuModel = new NoteMenuModel([{

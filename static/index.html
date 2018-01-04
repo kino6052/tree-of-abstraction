@@ -2,8 +2,12 @@
     <head>
         <style>
             #application-body {
-                height: 100%;
+                height: 95%;
                 width: 100%;
+            }
+            #application-menu {
+                width: 100%;
+                height: 5%;
             }
             .area {
                 height: 100%;
@@ -24,6 +28,10 @@
         </style>
     </head>
     <body>
+        <div id="application-menu">
+            <button id="application-menu-hierarchy-json">Hierarchy JSON to Console</button>
+            <button id="application-menu-notes-json">Notes JSON to Console</button>
+        </div>
         <div id="application-body">
             <div id="notes-area" class="area"></div>
             <div id="hierarchy-area" class="area"></div>
