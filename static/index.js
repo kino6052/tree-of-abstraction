@@ -459,7 +459,7 @@ var NoteMenuController = (function () {
         this.display();
     }
     NoteMenuController.prototype.display = function () {
-        this.noteMenuView.display(this.noteMenuModel);
+        this.noteMenuView.display(this);
         this.noteMenuView.initLogic(this);
     };
     NoteMenuController.prototype.edit = function (nodeId) {
@@ -491,28 +491,32 @@ var NoteMenuController = (function () {
         noteNode.labelIds.push(hierarchyNodeId);
         this.hierarchyController.addNoteId(hierarchyNodeId, noteNodeId);
     };
+    NoteMenuController.prototype.findHierarchyNodesAsList = function (name) {
+        return this.hierarchyController.findAsList(name);
+    };
     return NoteMenuController;
 }());
 var NoteMenuView = (function () {
     function NoteMenuView(noteMenuWindow) {
         this.noteMenuWindow = noteMenuWindow;
     }
-    NoteMenuView.prototype.displayNoteMenuModelHTML = function (noteMenuModel) {
+    NoteMenuView.prototype.displayNoteMenuModelHTML = function (noteMenuController) {
+        var noteMenuModel = noteMenuController.noteMenuModel;
         var result = "";
         var notes = noteMenuModel.notes;
         for (var _i = 0, notes_1 = notes; _i < notes_1.length; _i++) {
             var note = notes_1[_i];
-            result += this.displayNoteHTML(note);
+            result += this.displayNoteHTML(note, noteMenuController);
         }
         return "<ul>" + result + "</ul>";
     };
-    NoteMenuView.prototype.displayNoteHTML = function (node) {
-        return this.generateNodeListElement(node.id, node.name);
+    NoteMenuView.prototype.displayNoteHTML = function (node, noteMenuController) {
+        return this.generateNodeListElement(node.id, node.name, noteMenuController);
     };
     NoteMenuView.prototype.generateNodeStyle = function () {
         return "style='width: 200px;'";
     };
-    NoteMenuView.prototype.generateNodeListElement = function (nodeId, nodeName) {
+    NoteMenuView.prototype.generateNodeListElement = function (nodeId, nodeName, noteMenuController) {
         return "" +
             "<li " + this.generateNodeStyle() + ">" +
             "<div class='note' id='" + nodeId + "'>" +
@@ -521,6 +525,7 @@ var NoteMenuView = (function () {
             "</span>" +
             this.generateNodeButtons() +
             "</div>" +
+            this.displayLabels(nodeId, noteMenuController) +
             "</li>";
     };
     NoteMenuView.prototype.generateNodeNameStyle = function () {
@@ -535,10 +540,11 @@ var NoteMenuView = (function () {
             "<span class='remove'> remove </span>" +
             "</div>";
     };
-    NoteMenuView.prototype.display = function (noteMenuModel) {
-        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(noteMenuModel));
+    NoteMenuView.prototype.display = function (noteMenuController) {
+        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(noteMenuController));
     };
     NoteMenuView.prototype.initLogic = function (noteMenuController) {
+        this.noteMenuController = noteMenuController;
         $(".note-name").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
             console.log(nodeId);
@@ -587,6 +593,7 @@ var NoteMenuView = (function () {
             notesArea.html("<div class='note-view'>" +
                 "<div class='note-content'></div>" +
                 this.displayNoteContentButtons() +
+                this.displayLabels(noteId, noteMenuController) +
                 "</div>");
             $(".note-content").html(node.content);
         }
@@ -596,11 +603,53 @@ var NoteMenuView = (function () {
         $("#return-note").on("click", function () {
             noteMenuController.display();
         });
+        $("#label-search-input").on("focusin", function () {
+            var labels = noteMenuController.findHierarchyNodesAsList("");
+            $("#label-search-datalist").html(_this.displayDataListOptions(labels));
+        });
+        $("#label-search-input").on("focusout", function () {
+            $("#label-search-datalist").html("");
+        });
+        $("#label-search-add-button").on("click", function (e) {
+            var $button = $(e.currentTarget);
+            var $input = $("#label-search-input");
+            var value = $input.val();
+            var labelId = value.split("-")[1];
+            console.log(labelId);
+            noteMenuController.addLabel(noteId, labelId);
+            _this.displayNote(noteId, noteMenuController);
+        });
+    };
+    NoteMenuView.prototype.displayLabels = function (noteId, noteMenuController) {
+        var note = noteMenuController.findNote(noteId);
+        var result = "";
+        var labels = note.labelIds;
+        for (var _i = 0, labels_1 = labels; _i < labels_1.length; _i++) {
+            var label = labels_1[_i];
+            var node = noteMenuController.hierarchyController.find(label);
+            result += "<span>" + node.name + "</span>";
+        }
+        return "<div class='labels'>" + result + "</div>";
     };
     NoteMenuView.prototype.displayNoteContentButtons = function () {
         return "" +
             "<button id='edit-note'>Edit</button>" +
-            "<button id='return-note'>Return</button>";
+            "<button id='return-note'>Return</button>" +
+            this.displayDataList();
+    };
+    NoteMenuView.prototype.displayDataList = function () {
+        return "" +
+            "<input id='label-search-input' list='label-search-datalist'>" +
+            "<datalist id='label-search-datalist'></datalist>" +
+            "<button id='label-search-add-button'>Add Label</button>";
+    };
+    NoteMenuView.prototype.displayDataListOptions = function (nodeList) {
+        var result = "";
+        for (var _i = 0, nodeList_1 = nodeList; _i < nodeList_1.length; _i++) {
+            var node = nodeList_1[_i];
+            result += "<option value='" + node.name + "-" + node.id + "'>";
+        }
+        return result;
     };
     NoteMenuView.prototype.displayEditor = function (noteId, noteMenuController) {
         var _this = this;

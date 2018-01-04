@@ -459,7 +459,7 @@ class NoteMenuController {
         this.display();
     }
     display(){
-        this.noteMenuView.display(this.noteMenuModel);
+        this.noteMenuView.display(this);
         this.noteMenuView.initLogic(this);
     }
     edit(nodeId:String){
@@ -491,6 +491,9 @@ class NoteMenuController {
         noteNode.labelIds.push(hierarchyNodeId);
         this.hierarchyController.addNoteId(hierarchyNodeId, noteNodeId);
     }
+    findHierarchyNodesAsList(name:String){
+        return this.hierarchyController.findAsList(name);
+    }
 }
 
 class NoteMenuView {
@@ -499,30 +502,31 @@ class NoteMenuView {
     constructor(noteMenuWindow: Object){
         this.noteMenuWindow = noteMenuWindow;
     }
-    displayNoteMenuModelHTML(noteMenuModel:NoteMenuModel){
+    displayNoteMenuModelHTML(noteMenuController:NoteMenuController){
+        let noteMenuModel = noteMenuController.noteMenuModel;
         let result = "";
         let notes = noteMenuModel.notes;
         for (let note of notes){
-            result += this.displayNoteHTML(note);
+            result += this.displayNoteHTML(note, noteMenuController);
         }
         return "<ul>" + result + "</ul>";
     }
-    displayNoteHTML(node: NoteNode){
-        return this.generateNodeListElement(node.id, node.name);
+    displayNoteHTML(node: NoteNode, noteMenuController:NoteMenuController){
+        return this.generateNodeListElement(node.id, node.name, noteMenuController);
     }
     generateNodeStyle(){
         return "style='width: 200px;'";
     }
-    generateNodeListElement(nodeId:String, nodeName:String){
+    generateNodeListElement(nodeId:String, nodeName:String, noteMenuController:NoteMenuController){
         return ""                                                                                       +
-            "<li "+this.generateNodeStyle()+">"                                                                                      +
+            "<li "+this.generateNodeStyle()+">"                                                         +
                 "<div class='note' id='"+nodeId+"'>"                                                    +
-                    "<span class='note-name' "+this.generateNodeNameStyle()+">"                             +
+                    "<span class='note-name' "+this.generateNodeNameStyle()+">"                         +
                         nodeName                                                                        +
                     "</span>"                                                                           +
                     this.generateNodeButtons()                                                          +
                 "</div>"                                                                                +
-                
+                this.displayLabels(nodeId, noteMenuController)                                          +
             "</li>"
     }
     generateNodeNameStyle(){
@@ -537,10 +541,11 @@ class NoteMenuView {
                     "<span class='remove'> remove </span>"                                              +
                 "</div>";
     }
-    display(noteMenuModel: NoteMenuModel){
-        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(noteMenuModel));
+    display(noteMenuController:noteMenuController){
+        this.noteMenuWindow.html(this.displayNoteMenuModelHTML(noteMenuController));
     }
     initLogic(noteMenuController: NoteMenuController){
+        this.noteMenuController = noteMenuController;
         $(".note-name").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
             console.log(nodeId);
@@ -589,6 +594,7 @@ class NoteMenuView {
                 "<div class='note-view'>"                   +
                     "<div class='note-content'></div>"      +
                     this.displayNoteContentButtons()        +
+                    this.displayLabels(noteId, noteMenuController) +
                 "</div>"
             );
             $(".note-content").html(node.content);
@@ -599,11 +605,52 @@ class NoteMenuView {
         $("#return-note").on("click", ()=>{
             noteMenuController.display();
         });
+        $("#label-search-input").on("focusin", ()=>{
+            let labels = noteMenuController.findHierarchyNodesAsList("");
+            $("#label-search-datalist").html(this.displayDataListOptions(labels));
+        });
+        $("#label-search-input").on("focusout", ()=>{
+            $("#label-search-datalist").html("");
+        });
+        $("#label-search-add-button").on("click", (e)=>{
+            let $button = $(e.currentTarget);
+            let $input = $("#label-search-input");
+            let value = $input.val();
+            let labelId = value.split("-")[1];
+            console.log(labelId);
+            noteMenuController.addLabel(noteId, labelId);
+            this.displayNote(noteId, noteMenuController);
+        })
+    }
+    displayLabels(noteId:String, noteMenuController:NoteMenuController){
+        let note = noteMenuController.findNote(noteId);
+        let result = "";
+        let labels = note.labelIds;
+        for (let label of labels){
+            let node = noteMenuController.hierarchyController.find(label);
+            result += "<span>"+node.name+"</span>";
+        }
+        return "<div class='labels'>" + result + "</div>";
+
     }
     displayNoteContentButtons(){
         return "" +
             "<button id='edit-note'>Edit</button>" +
-            "<button id='return-note'>Return</button>"
+            "<button id='return-note'>Return</button>" +
+            this.displayDataList();
+    }
+    displayDataList(){
+        return "" +
+            "<input id='label-search-input' list='label-search-datalist'>" +
+            "<datalist id='label-search-datalist'></datalist>" + 
+            "<button id='label-search-add-button'>Add Label</button>";
+    }
+    displayDataListOptions(nodeList:Array<HierarchyNode>){
+        let result = "";
+        for (let node of nodeList){
+        result += "<option value='"+node.name+"-"+node.id+"'>"
+        }
+        return result;
     }
     displayEditor(noteId:String, noteMenuController:NoteMenuController){
         let note = noteMenuController.findNote(noteId);
