@@ -461,6 +461,10 @@ var NoteMenuModel = (function () {
         var node = this.findNode(noteId);
         node.content = newContent;
     };
+    NoteMenuModel.prototype.updateNodeName = function (nodeId, newNodeName) {
+        var node = this.findNode(nodeId);
+        node.name = newNodeName;
+    };
     return NoteMenuModel;
 }());
 var NoteMenuController = (function () {
@@ -556,7 +560,6 @@ var NoteMenuView = (function () {
     NoteMenuView.prototype.generateNodeButtons = function () {
         return "" +
             "<div class='node-buttons'>" +
-            "<span class='collapse'> collapse </span>|" +
             "<span class='edit'> edit </span>|" +
             "<span class='add'> add </span>|" +
             "<span class='remove'> remove </span>" +
@@ -719,11 +722,20 @@ var noteMenuView = new NoteMenuView($("#notes-area"));
 var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
 hierarchyController.noteMenuController = noteMenuController;
 noteMenuController.hierarchyController = hierarchyController;
-$("#application-menu-hierarchy-json").on("click", function () {
-    console.log(hierarchyController.hierarchyModel.hierarchyRoot);
+// Global Menu
+$("#application-menu-export").on("click", function () {
+    var root = hierarchyController.hierarchyModel.hierarchyRoot;
+    var JSONroot = JSON.stringify(root);
+    console.log(JSONroot);
+    var notes = noteMenuController.noteMenuModel.notes;
+    var JSONnotes = JSON.stringify(notes);
+    console.log(JSONnotes);
 });
-$("#application-menu-notes-json").on("click", function () {
-    console.log(noteMenuController.noteMenuModel.notes);
+$("#application-menu-import").on("click", function () {
+    hierarchyController.hierarchyModel.hierarchyRoot = globalRoot;
+    noteMenuController.noteMenuModel.notes = globalNotes;
+    noteMenuController.display();
+    hierarchyController.display();
 });
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function (test) {

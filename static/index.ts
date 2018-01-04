@@ -460,6 +460,10 @@ class NoteMenuModel {
         let node = this.findNode(noteId);
         node.content = newContent;
     }
+    updateNodeName(nodeId:String, newNodeName:String){
+        let node = this.findNode(nodeId);
+        node.name = newNodeName;
+    }
 }
 
 class NoteMenuController {
@@ -559,7 +563,6 @@ class NoteMenuView {
     generateNodeButtons(){
         return "" +
                 "<div class='node-buttons'>"                                                            +
-                    "<span class='collapse'> collapse </span>|"                                         + 
                     "<span class='edit'> edit </span>|"                                                 + 
                     "<span class='add'> add </span>|"                                                   + 
                     "<span class='remove'> remove </span>"                                              +
@@ -734,12 +737,21 @@ hierarchyController.noteMenuController = noteMenuController;
 noteMenuController.hierarchyController = hierarchyController;
 
 // Global Menu
-$("#application-menu-hierarchy-json").on("click", ()=>{
-    console.log(hierarchyController.hierarchyModel.hierarchyRoot);
+$("#application-menu-export").on("click", ()=>{
+    let root = hierarchyController.hierarchyModel.hierarchyRoot;
+    let JSONroot = JSON.stringify(root);
+    console.log(JSONroot);
+    let notes = noteMenuController.noteMenuModel.notes;
+    let JSONnotes = JSON.stringify(notes);
+    console.log(JSONnotes);
 });
-$("#application-menu-notes-json").on("click", ()=>{
-    console.log(noteMenuController.noteMenuModel.notes);
+$("#application-menu-import").on("click", ()=>{
+    hierarchyController.hierarchyModel.hierarchyRoot = globalRoot;
+    noteMenuController.noteMenuModel.notes = globalNotes;
+    noteMenuController.display();
+    hierarchyController.display();
 })
+
 
 // Node Unit Tests
 exports.NOTE_MENU_JsonToListTest = function(test) {
