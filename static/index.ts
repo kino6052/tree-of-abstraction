@@ -515,8 +515,13 @@ class NoteMenuController {
     }
     addLabel(noteNodeId: String, hierarchyNodeId: String){
         let noteNode = this.findNote(noteNodeId);
-        noteNode.labelIds.push(hierarchyNodeId);
-        this.hierarchyController.addNoteId(hierarchyNodeId, noteNodeId);
+        if (hierarchyNodeId) {
+            if (noteNode.labelIds.indexOf(hierarchyNodeId)===-1){ // Already Contains NodeId
+                noteNode.labelIds.push(hierarchyNodeId);    
+                this.hierarchyController.addNoteId(hierarchyNodeId, noteNodeId); 
+            }
+        }
+        
     }
     findHierarchyNodesAsList(name:String){
         return this.hierarchyController.findAsList(name);
@@ -750,6 +755,7 @@ $("#application-menu-import").on("click", ()=>{
     noteMenuController.noteMenuModel.notes = globalNotes;
     noteMenuController.display();
     hierarchyController.display();
+    $("#application-menu-import").remove();
 })
 
 
@@ -846,10 +852,13 @@ exports.NOTE_MENU_CONTROLLER_AddLabelToNote = function(test){ // NOTE: It is ver
     let node003 = new HierarchyNode("Test", []);
     hierarchyController.add(node003, node002.id);
     let noteNode = noteMenuModel.notes[0];
-    
     noteMenuController.addLabel(noteNode.id, node002.id);
     test.equals(node002.id, noteNode.labelIds[0]);
     test.equals(node002.noteIds[0], noteNode.id);
+    noteMenuController.addLabel(noteNode.id, null);
+    test.equals(1, noteNode.labelIds.length);
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(1, noteNode.labelIds.length);
     test.done();
 }
 
