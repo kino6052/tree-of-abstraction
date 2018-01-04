@@ -724,14 +724,14 @@ Promise.all(
     ]
 ).then((results)=>{
    let hierarchyModel = new HierarchyModel(
-        JSON.parse(results[0])
+        JSON.parse(results[0]).hierarchy
     )
     
     // Initialize Application
     let hierarchyView = new HierarchyView($("#hierarchy-area"));
     let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
     let noteMenuModel = new NoteMenuModel(
-        JSON.parse(results[1])
+        JSON.parse(results[1]).notes
     );
     let noteMenuView = new NoteMenuView($("#notes-area"));
     let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
@@ -746,7 +746,7 @@ Promise.all(
         $.ajax({
             type: "POST",
             url: "/saveHierarchy",
-            data: JSONroot,
+            data: {hierarchy: root},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
         })
@@ -754,8 +754,8 @@ Promise.all(
         let JSONnotes = JSON.stringify(notes);
         $.ajax({
             type: "POST",
-            url: "/saveHierarchy",
-            data: JSONroot,
+            url: "/saveNotes",
+            data: {notes: notes},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
         })
