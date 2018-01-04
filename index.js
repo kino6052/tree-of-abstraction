@@ -5,20 +5,22 @@ const app = express();
 const jsonParser = bodyParser.json();
 
 app.listen(process.env.PORT);
-
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+app.use(bodyParser.json());
 app.use('/', express.static('static'));
 app.use('/dependencies', express.static('bower_components'));
 app.get('/getHierarchy', function (req, res) {
   var data = fs.readFileSync('./data/hierarchy.json', 'utf8');
   res.send(data);
 });
-app.post('/saveHierarchy', bodyParser.text(), function(req, res){
+app.post('/saveHierarchy', function(req, res){
     if (!req.body) return res.sendStatus(400);
     else {
         var data = req.body;
-        console.log(req);
-        fs.writeFileSync('./data/hierarchy-'+new Date().valueOf()+'.json', data);
-        fs.writeFileSync('./data/hierarchy.json', data);
+        fs.writeFileSync('./data/hierarchy-'+new Date().valueOf()+'.json', JSON.stringify(data));
+        fs.writeFileSync('./data/hierarchy.json', JSON.stringify(data));
         res.send(req.body);
     }
 });
@@ -31,6 +33,7 @@ app.post('/saveNotes', function(req, res){
     else {
         var data = req.body;
         fs.writeFileSync('./data/notes-'+new Date().valueOf()+'.json', JSON.stringify(data));
-        fs.writeFileSync('./data/notes.json', data);
+        fs.writeFileSync('./data/notes.json', JSON.stringify(data));
+        res.send(req.body);
     }
 });

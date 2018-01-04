@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/kino6052/tree-of-abstraction#readme",
   "dependencies": {
+    "body-parser": "^1.18.2",
     "express": "^4.16.2",
     "fs": "0.0.1-security"
   },
