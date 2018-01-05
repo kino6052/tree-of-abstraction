@@ -38,7 +38,6 @@ class HierarchyController {
     constructor(hierarchyModel: HierarchyModel, hierarchyView: HierarchyView) {
         this.hierarchyModel = hierarchyModel;
         this.hierarchyView = hierarchyView;
-        this.display();
     }
     display(){
         this.hierarchyView.display(this);
@@ -256,7 +255,7 @@ class HierarchyModel {
                 }
             }
             for (let property in hierarchy){
-                if (currentNode.hasOwnProperty[property] && property !== "children"){
+                if (currentNode[property] !== undefined && property !== "children"){
                     currentNode[property] = hierarchy[property]
                 }
             }
@@ -432,7 +431,8 @@ class NoteMenuModel {
             if (note.hasOwnProperty("name")){
                 noteNode = new NoteNode(note.name);
                 for (let property in note){
-                    if (noteNode.hasOwnProperty[property]){
+                    if (noteNode[property] !== undefined){
+                        console.log(property, note[property]);
                         noteNode[property] = note[property];    
                     }
                 }
@@ -476,7 +476,6 @@ class NoteMenuController {
     constructor(noteMenuModel: NoteMenuModel, noteMenuView: NoteMenuView) {
         this.noteMenuModel = noteMenuModel;
         this.noteMenuView = noteMenuView;
-        this.display();
     }
     display(){
         this.noteMenuView.display(this);
@@ -730,20 +729,23 @@ Promise.all(
     ]
 ).then((results)=>{
     let hierarchyModel = new HierarchyModel(
-        JSON.parse(results[0])
+        JSON.parse(results[0]).hierarchy
     )
     
     // Initialize Application
     let hierarchyView = new HierarchyView($("#hierarchy-area"));
     let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
     let noteMenuModel = new NoteMenuModel(
-        JSON.parse(results[1])
+        JSON.parse(results[1]).notes
     );
     let noteMenuView = new NoteMenuView($("#notes-area"));
     let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
     
     hierarchyController.noteMenuController = noteMenuController;
     noteMenuController.hierarchyController = hierarchyController;
+    
+    hierarchyController.display();
+    noteMenuController.display();
     
     // Global Menu
     $("#application-menu-save").on("click", ()=>{
@@ -752,7 +754,7 @@ Promise.all(
         $.ajax({
             type: "POST",
             url: "/saveHierarchy",
-            data: {hierarchy: JSON.stringify(root)},
+            data: {hierarchy: root},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
         })
@@ -761,7 +763,7 @@ Promise.all(
         $.ajax({
             type: "POST",
             url: "/saveNotes",
-            data: {notes: JSON.stringify(notes)},
+            data: {notes: notes},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
         })
@@ -776,9 +778,10 @@ exports.NOTE_MENU_JsonToListTest = function(test) {
        id: generateUniqueHashId(),
        visible: true,
        articleId: null,
-       labelIds: []
+       labelIds: ['abc']
     }]);
     let noteNode = new NoteNode("note001", []);
+    noteNode.labelIds = ['abc'];
     test.notEqual(noteMenuModel.notes[0].id, noteNode.id);
     noteMenuModel.notes[0].id="";
     noteNode.id="";
