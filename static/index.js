@@ -58,8 +58,8 @@ var HierarchyController = (function () {
         this.display();
     };
     HierarchyController.prototype.remove = function (nodeId) {
-        this.noteMenuController.removeLabel(nodeId);
         this.hierarchyModel.remove(nodeId, String);
+        this.noteMenuController.removeLabel(nodeId);
         this.display();
     };
     HierarchyController.prototype.find = function (nodeId) {
@@ -80,6 +80,7 @@ var HierarchyController = (function () {
     };
     HierarchyController.prototype.removeNoteId = function (noteNodeId) {
         this.hierarchyModel.removeNoteId(noteNodeId, this);
+        this.display();
     };
     HierarchyController.prototype.iterate = function (currentNode, callback) {
         this.hierarchyModel.iterate(currentNode, callback, 0);
@@ -322,22 +323,39 @@ var HierarchyModel = (function () {
         }
     };
     HierarchyModel.prototype.removeNode = function (currentNode, nodeId) {
-        if (currentNode.id === nodeId) {
-            var resultNodeIndex = currentNode.children.indexOf(resultNode);
-            currentNode.children.splice(resultNodeIndex, resultNodeIndex + 1);
-            return currentNode;
-        }
-        else {
-            var resultNode = null;
-            for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
-                var childNode = _a[_i];
-                resultNode = this.removeNode(childNode, nodeId);
-                if (resultNode && resultNode.id === nodeId) {
-                    var resultNodeIndex = currentNode.children.indexOf(resultNode);
-                    currentNode.children.splice(resultNodeIndex, resultNodeIndex + 1);
+        var recurseRemoveNode = function (parentNode, childNode, nodeId) {
+            if (parentNode) {
+                if (childNode) {
+                    if (childNode.id === nodeId) {
+                        parentNode.children = parentNode.children.filter(function (el) {
+                            if (el.id !== nodeId) {
+                                return el;
+                            }
+                        });
+                    }
+                    else {
+                        for (var _i = 0, _a = childNode.children; _i < _a.length; _i++) {
+                            var child = _a[_i];
+                            recurseRemoveNode(childNode, child, nodeId);
+                        }
+                    }
                 }
             }
-            return resultNode;
+            else {
+                for (var _b = 0, _c = parentNode.children; _b < _c.length; _b++) {
+                    var child = _c[_b];
+                    recurseRemoveNode(childNode, child, nodeId);
+                }
+            }
+        };
+        if (currentNode.id === nodeId) {
+            return; // Don't Delete ROOT
+        }
+        else {
+            for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
+                var child = _a[_i];
+                recurseRemoveNode(currentNode, child, nodeId);
+            }
         }
     };
     HierarchyModel.prototype.add = function (newNode, nodeId) {
@@ -412,13 +430,19 @@ var HierarchyModel = (function () {
         }
     };
     HierarchyModel.prototype.removeNoteId = function (noteId, hierarchyController) {
-        this.iterate(this.hierarchyRoot, function (currentNode) {
-            var noteIdIndex = currentNode.noteIds.indexOf(noteId);
-            if (noteIdIndex !== -1) {
-                currentNode.noteIds.splice(noteIdIndex, noteIdIndex + 1);
-                hierarchyController.noteMenuController.removeLabel(currentNode.id);
-            }
-        }, 0);
+        var isFound = false;
+        if (noteId) {
+            this.iterate(this.hierarchyRoot, function (currentNode) {
+                currentNode.noteIds = currentNode.noteIds.filter(function (el) {
+                    if (el !== noteId) {
+                        return el;
+                    }
+                    else {
+                        isFound = true;
+                    }
+                });
+            }, 0);
+        }
     };
     return HierarchyModel;
 }());
@@ -474,8 +498,11 @@ var NoteMenuModel = (function () {
     NoteMenuModel.prototype.remove = function (noteId) {
         var node = this.findNode(noteId);
         if (node) {
-            var index = this.notes.indexOf(node);
-            this.notes.splice(index, index + 1);
+            this.notes = this.notes.filter(function (el) {
+                if (el.id !== noteId) {
+                    return el;
+                }
+            });
         }
     };
     NoteMenuModel.prototype.findNode = function (noteId) {
@@ -496,12 +523,18 @@ var NoteMenuModel = (function () {
         node.name = newNodeName;
     };
     NoteMenuModel.prototype.removeLabel = function (hierarchyNodeId, noteMenuController) {
-        for (var _i = 0, _a = this.notes; _i < _a.length; _i++) {
-            var note = _a[_i];
-            var hierarchyNodeIdIndex = note.labelIds.indexOf(hierarchyNodeId);
-            if (hierarchyNodeIdIndex !== -1) {
-                note.labelIds.splice(hierarchyNodeIdIndex, hierarchyNodeIdIndex + 1);
-                noteMenuController.hierarchyController.removeNoteId(note.id);
+        var isFound = false;
+        if (hierarchyNodeId) {
+            for (var _i = 0, _a = this.notes; _i < _a.length; _i++) {
+                var note = _a[_i];
+                note.labelIds = note.labelIds.filter(function (el) {
+                    if (el !== hierarchyNodeId) {
+                        return el;
+                    }
+                    else {
+                        isFound = true;
+                    }
+                });
             }
         }
     };
@@ -531,8 +564,8 @@ var NoteMenuController = (function () {
         this.display();
     };
     NoteMenuController.prototype.remove = function (nodeId) {
-        this.hierarchyController.removeNoteId(nodeId);
         this.noteMenuModel.remove(nodeId, String);
+        this.hierarchyController.removeNoteId(nodeId);
         this.display();
     };
     NoteMenuController.prototype.displayNote = function (nodeId) {
@@ -564,6 +597,7 @@ var NoteMenuController = (function () {
     };
     NoteMenuController.prototype.removeLabel = function (hierarchyNodeId) {
         this.noteMenuModel.removeLabel(hierarchyNodeId, this);
+        this.display();
     };
     NoteMenuController.prototype.findHierarchyNodesAsList = function (name) {
         return this.hierarchyController.findAsList(name);
@@ -592,17 +626,22 @@ var NoteMenuView = (function () {
         return "style='width: 200px;'";
     };
     NoteMenuView.prototype.generateNodeListElement = function (node, noteMenuController) {
-        return "" +
-            "<li " + this.generateNodeStyle() + ">" +
-            "<div class='note' id='" + node.id + "'>" +
-            "<span class='note-name' " + this.generateNodeNameStyle() + ">" +
-            node.name +
-            "</span>" +
-            this.generateNodeButtons() +
-            "</div>" +
-            this.displayLabels(node.id, noteMenuController) +
-            this.displayNoteContent(node) +
-            "</li>";
+        if (node) {
+            return "" +
+                "<li " + this.generateNodeStyle() + ">" +
+                "<div class='note' id='" + node.id + "'>" +
+                "<span class='note-name' " + this.generateNodeNameStyle() + ">" +
+                node.name +
+                "</span>" +
+                this.generateNodeButtons() +
+                "</div>" +
+                this.displayLabels(node.id, noteMenuController) +
+                this.displayNoteContent(node) +
+                "</li>";
+        }
+        else {
+            return "";
+        }
     };
     NoteMenuView.prototype.generateNodeNameStyle = function () {
         return "style='font-weight: bold;'";
@@ -610,9 +649,9 @@ var NoteMenuView = (function () {
     NoteMenuView.prototype.generateNodeButtons = function () {
         return "" +
             "<div class='node-buttons'>" +
-            "<span class='edit'> edit </span>|" +
-            "<span class='add'> add </span>|" +
-            "<span class='remove'> remove </span>" +
+            "<span class='note-list-item-buttons edit'> edit </span>|" +
+            "<span class='note-list-item-buttons add'> add </span>|" +
+            "<span class='note-list-item-buttons remove'> remove </span>" +
             "</div>";
     };
     NoteMenuView.prototype.display = function (noteMenuController) {
@@ -621,23 +660,23 @@ var NoteMenuView = (function () {
     };
     NoteMenuView.prototype.initLogic = function (noteMenuController) {
         this.noteMenuController = noteMenuController;
-        $(".note-name").on("click", function (e) {
+        $(".note-list-item-buttons.note-name").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.displayNote(nodeId, noteMenuController);
         });
-        $(".collapse").on("click", function (e) {
+        $(".note-list-item-buttons.collapse").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.collapseNode(nodeId);
         });
-        $(".edit").on("click", function (e) {
+        $(".note-list-item-buttons.edit").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.edit(nodeId);
         });
-        $(".add").on("click", function (e) {
+        $(".note-list-item-buttons.add").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.add(nodeId);
         });
-        $(".remove").on("click", function (e) {
+        $(".note-list-item-buttons.remove").on("click", function (e) {
             var nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.remove(nodeId);
         });
@@ -706,7 +745,9 @@ var NoteMenuView = (function () {
         for (var _i = 0, labels_1 = labels; _i < labels_1.length; _i++) {
             var label = labels_1[_i];
             var node = noteMenuController.hierarchyController.find(label);
-            result += "<span class='note-label-span'>" + node.name + "</span>";
+            if (node) {
+                result += "<span class='note-label-span'>" + node.name + "</span>";
+            }
         }
         return "<div class='labels'>" + result + "</div>";
     };
@@ -1160,7 +1201,6 @@ exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function (test
     test.equals(node002.noteIds[0], noteNode.id);
     test.equals(1, noteNode.labelIds.length);
     noteMenuController.remove(noteNode.id);
-    test.equals(0, noteNode.labelIds.length);
     test.equals(0, node002.noteIds.length);
     test.done();
 };

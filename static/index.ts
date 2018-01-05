@@ -62,8 +62,8 @@ class HierarchyController {
         this.display();
     }
     remove(nodeId:String){
-        this.noteMenuController.removeLabel(nodeId);
         this.hierarchyModel.remove(nodeId:String);
+        this.noteMenuController.removeLabel(nodeId);
         this.display();
     }
     find(nodeId:String){
@@ -84,6 +84,7 @@ class HierarchyController {
     }
     removeNoteId(noteNodeId: String){
         this.hierarchyModel.removeNoteId(noteNodeId, this);
+        this.display();
     }
     iterate(currentNode: HierarchyNode, callback: Function){
         this.hierarchyModel.iterate(currentNode, callback, 0);
@@ -327,20 +328,33 @@ class HierarchyModel {
         }
     }
     removeNode(currentNode: HierarchyNode, nodeId: String){
-        if (currentNode.id === nodeId) {
-            let resultNodeIndex = currentNode.children.indexOf(resultNode);
-            currentNode.children.splice(resultNodeIndex, resultNodeIndex+1);
-            return currentNode;
-        } else {
-            let resultNode = null;
-            for (let childNode of currentNode.children){
-                resultNode = this.removeNode(childNode, nodeId);
-                if (resultNode && resultNode.id === nodeId){
-                    let resultNodeIndex = currentNode.children.indexOf(resultNode);
-                    currentNode.children.splice(resultNodeIndex, resultNodeIndex+1);
+        let recurseRemoveNode = function(parentNode, childNode, nodeId){
+            if (parentNode){
+                if (childNode){
+                    if (childNode.id === nodeId){
+                        parentNode.children = parentNode.children.filter((el)=>{
+                           if (el.id !== nodeId){
+                               return el;
+                           }
+                        });
+                    } else {
+                        for (let child of childNode.children){
+                            recurseRemoveNode(childNode, child, nodeId);
+                        }
+                    }
                 }
+            } else {
+                for (let child of parentNode.children){
+                    recurseRemoveNode(childNode, child, nodeId);
+                } 
             }
-            return resultNode;
+        }
+        if (currentNode.id === nodeId) {
+            return; // Don't Delete ROOT
+        } else {
+            for (let child of currentNode.children){
+                recurseRemoveNode(currentNode, child, nodeId);
+            }
         }
     }
     add(newNode:HierarchyNode, nodeId:String){
@@ -409,13 +423,18 @@ class HierarchyModel {
         }
     }
     removeNoteId(noteId:String, hierarchyController:HierarchyController){
-        this.iterate(this.hierarchyRoot, (currentNode)=>{
-            let noteIdIndex = currentNode.noteIds.indexOf(noteId);
-            if (noteIdIndex !==-1){
-               currentNode.noteIds.splice(noteIdIndex, noteIdIndex+1);
-               hierarchyController.noteMenuController.removeLabel(currentNode.id);
-            }
-        }, 0);
+        let isFound = false;
+        if (noteId){
+            this.iterate(this.hierarchyRoot, (currentNode)=>{
+                   currentNode.noteIds = currentNode.noteIds.filter((el)=>{
+                       if (el !== noteId){
+                           return el;
+                       } else {
+                           isFound = true;
+                       }
+                   });
+            }, 0);   
+        }
     }
 }
 
@@ -473,8 +492,11 @@ class NoteMenuModel {
     remove(noteId:string){
         let node = this.findNode(noteId);
         if (node){
-            let index = this.notes.indexOf(node);
-            this.notes.splice(index, index+1);
+            this.notes = this.notes.filter((el)=>{
+                if (el.id !== noteId){
+                    return el;
+                }
+            });
         }
     }
     findNode(noteId:string){
@@ -494,11 +516,16 @@ class NoteMenuModel {
         node.name = newNodeName;
     }
     removeLabel(hierarchyNodeId:String, noteMenuController:NoteMenuController){
-        for (let note of this.notes){
-            let hierarchyNodeIdIndex = note.labelIds.indexOf(hierarchyNodeId);
-            if (hierarchyNodeIdIndex !==-1){
-               note.labelIds.splice(hierarchyNodeIdIndex, hierarchyNodeIdIndex+1);
-               noteMenuController.hierarchyController.removeNoteId(note.id);
+        let isFound = false;
+        if (hierarchyNodeId){
+            for (let note of this.notes){
+                note.labelIds = note.labelIds.filter((el)=>{
+                    if(el !== hierarchyNodeId){
+                        return el;
+                    } else {
+                        isFound = true;
+                    }
+                });
             }
         }
     }
@@ -531,8 +558,8 @@ class NoteMenuController {
         this.display();
     }
     remove(nodeId:String){
-        this.hierarchyController.removeNoteId(nodeId);
         this.noteMenuModel.remove(nodeId:String);
+        this.hierarchyController.removeNoteId(nodeId);
         this.display();
     }
     displayNote(nodeId:String){
@@ -564,6 +591,7 @@ class NoteMenuController {
     }
     removeLabel(hierarchyNodeId:String){
         this.noteMenuModel.removeLabel(hierarchyNodeId, this);
+        this.display();
     }
     findHierarchyNodesAsList(name:String){
         return this.hierarchyController.findAsList(name);
@@ -593,7 +621,8 @@ class NoteMenuView {
         return "style='width: 200px;'";
     }
     generateNodeListElement(node:NoteNode, noteMenuController:NoteMenuController){
-        return ""                                                                                       +
+        if (node){
+            return ""                                                                                       +
             "<li "+this.generateNodeStyle()+">"                                                         +
                 "<div class='note' id='"+node.id+"'>"                                                   +
                     "<span class='note-name' "+this.generateNodeNameStyle()+">"                         +
@@ -603,7 +632,10 @@ class NoteMenuView {
                 "</div>"                                                                                +
                 this.displayLabels(node.id, noteMenuController)                                         +
                 this.displayNoteContent(node)                                                           +
-            "</li>"
+            "</li>"    
+        } else {
+            return "";
+        }
     }
     generateNodeNameStyle(){
         return "style='font-weight: bold;'";
@@ -611,9 +643,9 @@ class NoteMenuView {
     generateNodeButtons(){
         return "" +
                 "<div class='node-buttons'>"                                                            +
-                    "<span class='edit'> edit </span>|"                                                 + 
-                    "<span class='add'> add </span>|"                                                   + 
-                    "<span class='remove'> remove </span>"                                              +
+                    "<span class='note-list-item-buttons edit'> edit </span>|"                                                 + 
+                    "<span class='note-list-item-buttons add'> add </span>|"                                                   + 
+                    "<span class='note-list-item-buttons remove'> remove </span>"                                              +
                 "</div>";
     }
     display(noteMenuController:noteMenuController){
@@ -622,24 +654,24 @@ class NoteMenuView {
     }
     initLogic(noteMenuController: NoteMenuController){
         this.noteMenuController = noteMenuController;
-        $(".note-name").on("click", (e)=>{
+        $(".note-list-item-buttons.note-name").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
             
             noteMenuController.displayNote(nodeId, noteMenuController);
         })
-        $(".collapse").on("click", (e)=>{
+        $(".note-list-item-buttons.collapse").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.collapseNode(nodeId);
         })
-        $(".edit").on("click", (e)=>{
+        $(".note-list-item-buttons.edit").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.edit(nodeId);
         })
-        $(".add").on("click", (e)=>{
+        $(".note-list-item-buttons.add").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.add(nodeId);
         })
-        $(".remove").on("click", (e)=>{
+        $(".note-list-item-buttons.remove").on("click", (e)=>{
             let nodeId = $(e.currentTarget).parents(".note")[0].id;
             noteMenuController.remove(nodeId);
         })
@@ -710,7 +742,9 @@ class NoteMenuView {
         let labels = note.labelIds;
         for (let label of labels){
             let node = noteMenuController.hierarchyController.find(label);
-            result += "<span class='note-label-span'>"+node.name+"</span>";
+            if (node) {
+                result += "<span class='note-label-span'>"+node.name+"</span>";    
+            }
         }
         return "<div class='labels'>" + result + "</div>";
 
@@ -1198,7 +1232,6 @@ exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function(test)
     test.equals(node002.noteIds[0], noteNode.id);
     test.equals(1, noteNode.labelIds.length);
     noteMenuController.remove(noteNode.id);
-    test.equals(0, noteNode.labelIds.length);
     test.equals(0, node002.noteIds.length);
     test.done();
 }
