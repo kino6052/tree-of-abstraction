@@ -831,6 +831,8 @@ Promise.all([
             data: { hierarchy: root },
             success: function (data) { console.log("Saved Hierarchy"); },
             dataType: "application/json"
+        }).done(function (data) {
+            console.log(data);
         });
         var notes = noteMenuController.noteMenuModel.notes;
         var JSONnotes = JSON.stringify(notes);
@@ -840,7 +842,10 @@ Promise.all([
             data: { notes: notes },
             success: function (data) { console.log("Saved Hierarchy"); },
             dataType: "application/json"
+        }).done(function (data) {
+            console.log(data);
         });
+        console.log("Saving");
     });
 });
 // Node Unit Tests

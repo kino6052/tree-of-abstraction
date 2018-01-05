@@ -21,7 +21,7 @@ app.post('/saveHierarchy', function(req, res){
         var data = req.body;
         fs.writeFileSync('./data/hierarchy-'+new Date().valueOf()+'.json', JSON.stringify(data));
         fs.writeFileSync('./data/hierarchy.json', JSON.stringify(data));
-        res.send(req.body);
+        res.send("Success");
     }
 });
 app.get('/getNotes', function (req, res) {
@@ -34,6 +34,6 @@ app.post('/saveNotes', function(req, res){
         var data = req.body;
         fs.writeFileSync('./data/notes-'+new Date().valueOf()+'.json', JSON.stringify(data));
         fs.writeFileSync('./data/notes.json', JSON.stringify(data));
-        res.send(req.body);
+        res.send("Success");
     }
 });

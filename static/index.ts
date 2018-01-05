@@ -838,7 +838,11 @@ Promise.all(
             data: {hierarchy: root},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
-        })
+        }).done(
+            (data) => {
+                console.log(data);
+            }
+        )
         let notes = noteMenuController.noteMenuModel.notes;
         let JSONnotes = JSON.stringify(notes);
         $.ajax({
@@ -847,7 +851,12 @@ Promise.all(
             data: {notes: notes},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
-        })
+        }).done(
+            (data) => {
+                console.log(data);
+            }
+        )
+        console.log("Saving");
     }); 
 });
 
