@@ -77,6 +77,23 @@ var HierarchyController = (function () {
         var hierarchyNode = this.find(hierarchyNodeId);
         hierarchyNode.noteIds.push(noteNodeId);
     };
+    HierarchyController.prototype.removeNoteId = function (noteNodeId) {
+        this.hierarchyModel.removeNoteId(noteNodeId, this);
+    };
+    HierarchyController.prototype.iterate = function (currentNode, callback) {
+        this.hierarchyModel.iterate(currentNode, callback, 0);
+    };
+    HierarchyController.prototype.getNoteIdsUpToThisNode = function (node) {
+        var noteIds = [];
+        if (node) {
+            this.iterate(node, function (currentNode) {
+                if (currentNode && currentNode.noteIds) {
+                    noteIds = noteIds.concat(currentNode.noteIds);
+                }
+            });
+        }
+        return noteIds;
+    };
     return HierarchyController;
 }());
 var HierarchyView = (function () {
@@ -171,7 +188,7 @@ var HierarchyView = (function () {
                 hierarchyController.noteMenuController.display();
             }
             else {
-                noteIds = node.noteIds;
+                noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
                 hierarchyController.noteMenuController.displayNotesByIds(noteIds);
             }
         });
@@ -393,6 +410,15 @@ var HierarchyModel = (function () {
             callback(child, currentNode);
         }
     };
+    HierarchyModel.prototype.removeNoteId = function (noteId, hierarchyController) {
+        this.iterate(this.hierarchyRoot, function (currentNode) {
+            var noteIdIndex = currentNode.noteIds.indexOf(noteId);
+            if (noteIdIndex !== -1) {
+                currentNode.noteIds.splice(noteIdIndex, noteIdIndex + 1);
+                hierarchyController.noteMenuController.removeLabel(currentNode.id);
+            }
+        }, 0);
+    };
     return HierarchyModel;
 }());
 var HierarchyNode = (function (_super) {
@@ -468,6 +494,16 @@ var NoteMenuModel = (function () {
         var node = this.findNode(nodeId);
         node.name = newNodeName;
     };
+    NoteMenuModel.prototype.removeLabel = function (hierarchyNodeId, noteMenuController) {
+        for (var _i = 0, _a = this.notes; _i < _a.length; _i++) {
+            var note = _a[_i];
+            var hierarchyNodeIdIndex = note.labelIds.indexOf(hierarchyNodeId);
+            if (hierarchyNodeIdIndex !== -1) {
+                note.labelIds.splice(hierarchyNodeIdIndex, hierarchyNodeIdIndex + 1);
+                noteMenuController.hierarchyController.removeNoteId(note.id);
+            }
+        }
+    };
     return NoteMenuModel;
 }());
 var NoteMenuController = (function () {
@@ -505,7 +541,9 @@ var NoteMenuController = (function () {
         for (var _i = 0, noteIds_1 = noteIds; _i < noteIds_1.length; _i++) {
             var noteId = noteIds_1[_i];
             var note = this.findNote(noteId);
-            notes.unshift(note);
+            if (note) {
+                notes.unshift(note);
+            }
         }
         this.noteMenuView.displayNotes(notes, this);
         this.noteMenuView.initLogic(this);
@@ -521,6 +559,9 @@ var NoteMenuController = (function () {
                 this.hierarchyController.addNoteId(hierarchyNodeId, noteNodeId);
             }
         }
+    };
+    NoteMenuController.prototype.removeLabel = function (hierarchyNodeId) {
+        this.noteMenuModel.removeLabel(hierarchyNodeId, this);
     };
     NoteMenuController.prototype.findHierarchyNodesAsList = function (name) {
         return this.hierarchyController.findAsList(name);
@@ -845,6 +886,67 @@ exports.NOTE_MENU_CONTROLLER_AddLabelToNote = function (test) {
     test.equals(1, noteNode.labelIds.length);
     test.done();
 };
+exports.NOTE_MENU_CONTROLLER_RemoveLabelFromNote = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }
+    ]);
+    var noteMenuView = new NoteMenuView($(""));
+    var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    var node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    var noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    noteMenuController.removeLabel(node002.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.equals(0, node002.noteIds.length);
+    test.done();
+};
+exports.NOTE_MENU_CONTROLLER_GetLabelIdsUpToThisNode = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: [],
+        noteIds: ["abc"]
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var node002 = new HierarchyNode("node002", []);
+    node002.noteIds = ["def", "ghi"];
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    var node003 = new HierarchyNode("Test", []);
+    node003.noteIds = ["jkl"];
+    hierarchyController.add(node003, node002.id);
+    var node004 = new HierarchyNode("Test", []);
+    node004.noteIds = ["jkl"];
+    hierarchyController.add(node004, node003.id);
+    var noteIds = hierarchyController.getNoteIdsUpToThisNode(node002);
+    test.deepEqual(["def", "ghi", "jkl", "jkl"], noteIds);
+    test.done();
+};
 exports.HIERARCHY_MODEL_JsonToTreeTest = function (test) {
     var hierarchyModel = new HierarchyModel({
         name: "node001",
@@ -951,6 +1053,42 @@ exports.HIERARCHY_CONTROLLER_FindByCollapsingHierarchy = function (test) {
     test.equals(true, hierarchyModel.hierarchyRoot.visible);
     test.equals(true, hierarchyModel.hierarchyRoot.children[0].visible);
     test.equals(false, hierarchyModel.hierarchyRoot.children[0].children[0].visible);
+    test.done();
+};
+exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNode = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }
+    ]);
+    var noteMenuView = new NoteMenuView($(""));
+    var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    var node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    var noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    hierarchyController.removeNoteId(noteNode.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.equals(0, node002.noteIds.length);
     test.done();
 };
 exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function (test) {

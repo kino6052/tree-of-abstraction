@@ -79,8 +79,24 @@ class HierarchyController {
     }
     addNoteId(hierarchyNodeId: String, noteNodeId: String){
         let hierarchyNode = this.find(hierarchyNodeId);
-        
         hierarchyNode.noteIds.push(noteNodeId);
+    }
+    removeNoteId(noteNodeId: String){
+        this.hierarchyModel.removeNoteId(noteNodeId, this);
+    }
+    iterate(currentNode: HierarchyNode, callback: Function){
+        this.hierarchyModel.iterate(currentNode, callback, 0);
+    }
+    getNoteIdsUpToThisNode(node:HierarchyNode){
+        let noteIds = [];
+        if (node){
+            this.iterate(node, (currentNode)=>{
+                if (currentNode && currentNode.noteIds){
+                    noteIds = noteIds.concat(currentNode.noteIds);
+                }
+            });
+        }
+        return noteIds;
     }
 }
 
@@ -180,7 +196,7 @@ class HierarchyView {
             if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id){
                 hierarchyController.noteMenuController.display();
             } else {
-                noteIds = node.noteIds;
+                noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
                 hierarchyController.noteMenuController.displayNotesByIds(noteIds);
             }
         });
@@ -391,6 +407,15 @@ class HierarchyModel {
             callback(child, currentNode);
         }
     }
+    removeNoteId(noteId:String, hierarchyController:HierarchyController){
+        this.iterate(this.hierarchyRoot, (currentNode)=>{
+            let noteIdIndex = currentNode.noteIds.indexOf(noteId);
+            if (noteIdIndex !==-1){
+               currentNode.noteIds.splice(noteIdIndex, noteIdIndex+1);
+               hierarchyController.noteMenuController.removeLabel(currentNode.id);
+            }
+        }, 0);
+    }
 }
 
 class HierarchyNode extends BaseNode {
@@ -467,6 +492,15 @@ class NoteMenuModel {
         let node = this.findNode(nodeId);
         node.name = newNodeName;
     }
+    removeLabel(hierarchyNodeId:String, noteMenuController:NoteMenuController){
+        for (let note of this.notes){
+            let hierarchyNodeIdIndex = note.labelIds.indexOf(hierarchyNodeId);
+            if (hierarchyNodeIdIndex !==-1){
+               note.labelIds.splice(hierarchyNodeIdIndex, hierarchyNodeIdIndex+1);
+               noteMenuController.hierarchyController.removeNoteId(note.id);
+            }
+        }
+    }
 }
 
 class NoteMenuController {
@@ -506,9 +540,10 @@ class NoteMenuController {
         let notes = [];
         for (let noteId of noteIds){
             let note = this.findNote(noteId);
-            notes.unshift(note);
+            if (note){
+                notes.unshift(note);    
+            }
         }
-        
         this.noteMenuView.displayNotes(notes, this);
         this.noteMenuView.initLogic(this);
     }
@@ -524,6 +559,9 @@ class NoteMenuController {
             }
         }
         
+    }
+    removeLabel(hierarchyNodeId:String){
+        this.noteMenuModel.removeLabel(hierarchyNodeId, this);
     }
     findHierarchyNodesAsList(name:String){
         return this.hierarchyController.findAsList(name);
@@ -875,6 +913,69 @@ exports.NOTE_MENU_CONTROLLER_AddLabelToNote = function(test){ // NOTE: It is ver
     test.done();
 }
 
+exports.NOTE_MENU_CONTROLLER_RemoveLabelFromNote = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyView = new HierarchyView($(""));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }  
+    ]);
+    let noteMenuView = new NoteMenuView($(""));
+    let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    let node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    let node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    let noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    noteMenuController.removeLabel(node002.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.equals(0, node002.noteIds.length);
+    test.done();
+}
+
+exports.NOTE_MENU_CONTROLLER_GetLabelIdsUpToThisNode = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: [],
+        noteIds: ["abc"]
+    });
+    let hierarchyView = new HierarchyView($(""));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let node002 = new HierarchyNode("node002", []);
+    node002.noteIds = ["def", "ghi"];
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    let node003 = new HierarchyNode("Test", []);
+    node003.noteIds = ["jkl"];
+    hierarchyController.add(node003, node002.id);
+    let node004 = new HierarchyNode("Test", []);
+    node004.noteIds = ["jkl"];
+    hierarchyController.add(node004, node003.id);
+    let noteIds = hierarchyController.getNoteIdsUpToThisNode(node002);
+    test.deepEqual(["def", "ghi", "jkl", "jkl"], noteIds);
+    test.done();
+}
+
 exports.HIERARCHY_MODEL_JsonToTreeTest = function(test) {
     let hierarchyModel = new HierarchyModel({
         name: "node001",
@@ -987,6 +1088,43 @@ exports.HIERARCHY_CONTROLLER_FindByCollapsingHierarchy = function(test){ // NOTE
     test.equals(true, hierarchyModel.hierarchyRoot.visible);
     test.equals(true, hierarchyModel.hierarchyRoot.children[0].visible);
     test.equals(false, hierarchyModel.hierarchyRoot.children[0].children[0].visible);
+    test.done();
+}
+
+exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNode = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyView = new HierarchyView($(""));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }  
+    ]);
+    let noteMenuView = new NoteMenuView($(""));
+    let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    let node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    let node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    let noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    hierarchyController.removeNoteId(noteNode.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.equals(0, node002.noteIds.length);
     test.done();
 }
 
