@@ -625,7 +625,7 @@ class NoteMenuView {
             return ""                                                                                       +
             "<li "+this.generateNodeStyle()+">"                                                         +
                 "<div class='note' id='"+node.id+"'>"                                                   +
-                    "<span class='note-name' "+this.generateNodeNameStyle()+">"                         +
+                    "<span class='note-list-item-buttons note-name' "+this.generateNodeNameStyle()+">"                         +
                         node.name                                                                       +
                     "</span>"                                                                           +
                     this.generateNodeButtons()                                                          +
@@ -982,7 +982,6 @@ exports.NOTE_MENU_CONTROLLER_RemoveLabelFromNote = function(test){ // NOTE: It i
     test.equals(1, noteNode.labelIds.length);
     noteMenuController.removeLabel(node002.id);
     test.equals(0, noteNode.labelIds.length);
-    test.equals(0, node002.noteIds.length);
     test.done();
 }
 
@@ -1195,7 +1194,6 @@ exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNode = function(test){ // NOTE: It 
     test.equals(node002.noteIds[0], noteNode.id);
     test.equals(1, noteNode.labelIds.length);
     hierarchyController.removeNoteId(noteNode.id);
-    test.equals(0, noteNode.labelIds.length);
     test.equals(0, node002.noteIds.length);
     test.done();
 }
