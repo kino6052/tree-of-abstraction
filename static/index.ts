@@ -62,6 +62,7 @@ class HierarchyController {
         this.display();
     }
     remove(nodeId:String){
+        this.noteMenuController.removeLabel(nodeId);
         this.hierarchyModel.remove(nodeId:String);
         this.display();
     }
@@ -530,6 +531,7 @@ class NoteMenuController {
         this.display();
     }
     remove(nodeId:String){
+        this.hierarchyController.removeNoteId(nodeId);
         this.noteMenuModel.remove(nodeId:String);
         this.display();
     }
@@ -950,6 +952,42 @@ exports.NOTE_MENU_CONTROLLER_RemoveLabelFromNote = function(test){ // NOTE: It i
     test.done();
 }
 
+exports.NOTE_MENU_CONTROLLER_RemoveLabelFromNoteByRemovingNode = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyView = new HierarchyView($(""));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }  
+    ]);
+    let noteMenuView = new NoteMenuView($(""));
+    let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    let node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    let node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    let noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    hierarchyController.remove(node002.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.done();
+}
+
 exports.NOTE_MENU_CONTROLLER_GetLabelIdsUpToThisNode = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
     let id = generateUniqueHashId();
     let hierarchyModel = new HierarchyModel({
@@ -1123,6 +1161,43 @@ exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNode = function(test){ // NOTE: It 
     test.equals(node002.noteIds[0], noteNode.id);
     test.equals(1, noteNode.labelIds.length);
     hierarchyController.removeNoteId(noteNode.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.equals(0, node002.noteIds.length);
+    test.done();
+}
+
+exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyView = new HierarchyView($(""));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }  
+    ]);
+    let noteMenuView = new NoteMenuView($(""));
+    let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    let node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    let node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    let noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    noteMenuController.remove(noteNode.id);
     test.equals(0, noteNode.labelIds.length);
     test.equals(0, node002.noteIds.length);
     test.done();

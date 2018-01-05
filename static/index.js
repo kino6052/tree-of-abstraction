@@ -58,6 +58,7 @@ var HierarchyController = (function () {
         this.display();
     };
     HierarchyController.prototype.remove = function (nodeId) {
+        this.noteMenuController.removeLabel(nodeId);
         this.hierarchyModel.remove(nodeId, String);
         this.display();
     };
@@ -530,6 +531,7 @@ var NoteMenuController = (function () {
         this.display();
     };
     NoteMenuController.prototype.remove = function (nodeId) {
+        this.hierarchyController.removeNoteId(nodeId);
         this.noteMenuModel.remove(nodeId, String);
         this.display();
     };
@@ -922,6 +924,41 @@ exports.NOTE_MENU_CONTROLLER_RemoveLabelFromNote = function (test) {
     test.equals(0, node002.noteIds.length);
     test.done();
 };
+exports.NOTE_MENU_CONTROLLER_RemoveLabelFromNoteByRemovingNode = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }
+    ]);
+    var noteMenuView = new NoteMenuView($(""));
+    var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    var node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    var noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    hierarchyController.remove(node002.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.done();
+};
 exports.NOTE_MENU_CONTROLLER_GetLabelIdsUpToThisNode = function (test) {
     var id = generateUniqueHashId();
     var hierarchyModel = new HierarchyModel({
@@ -1087,6 +1124,42 @@ exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNode = function (test) {
     test.equals(node002.noteIds[0], noteNode.id);
     test.equals(1, noteNode.labelIds.length);
     hierarchyController.removeNoteId(noteNode.id);
+    test.equals(0, noteNode.labelIds.length);
+    test.equals(0, node002.noteIds.length);
+    test.done();
+};
+exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var noteMenuModel = new NoteMenuModel([
+        {
+            name: "Note001",
+            id: generateUniqueHashId(),
+            content: "Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor... Lorem Ipsum Dolor..."
+        }
+    ]);
+    var noteMenuView = new NoteMenuView($(""));
+    var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    noteMenuController.hierarchyController = hierarchyController;
+    hierarchyController.noteMenuController = noteMenuController;
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    var node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    var noteNode = noteMenuModel.notes[0];
+    noteMenuController.addLabel(noteNode.id, node002.id);
+    test.equals(node002.id, noteNode.labelIds[0]);
+    test.equals(node002.noteIds[0], noteNode.id);
+    test.equals(1, noteNode.labelIds.length);
+    noteMenuController.remove(noteNode.id);
     test.equals(0, noteNode.labelIds.length);
     test.equals(0, node002.noteIds.length);
     test.done();
