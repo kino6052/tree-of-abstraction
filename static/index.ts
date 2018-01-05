@@ -155,7 +155,6 @@ class HierarchyView {
                     "</span>"                                                                           +
                     this.generateNodeButtons()                                                          +
                 "</div>"                                                                                +
-                
             "</li>"
     }
     generateNodeNameStyle(){
@@ -245,28 +244,26 @@ class HierarchyModel {
     buildHierarchyFromObject(hierarchy: Object, currentNode: HierarchyNode){
         let childNode = null;
         if (hierarchy.hasOwnProperty("name")){
-            currentNode.name = hierarchy.name;
+            if (hierarchy.hasOwnProperty("children")){
+                for (let child in hierarchy.children){
+                    childNode = this.buildHierarchyFromObject(
+                        hierarchy.children[child], 
+                        new HierarchyNode("",[])
+                    )
+                    if (childNode){
+                        currentNode.children.push(childNode);
+                    }
+                }
+            }
+            for (let property in hierarchy){
+                if (currentNode.hasOwnProperty[property] && property !== "children"){
+                    currentNode[property] = hierarchy[property]
+                }
+            }
+            return currentNode;
         } else {
             return null;
         }
-        if (hierarchy.hasOwnProperty("children")){
-            for (let child in hierarchy.children){
-                childNode = this.buildHierarchyFromObject(
-                    hierarchy.children[child], 
-                    new HierarchyNode("",[])
-                )
-                if (childNode){
-                    currentNode.children.push(childNode);
-                }
-            }
-        }
-        if (hierarchy.hasOwnProperty("visible")){
-            currentNode.visible = hierarchy.visible;
-        }
-        if (hierarchy.hasOwnProperty("collapsed")){
-            currentNode.collapsed = hierarchy.collapsed;
-        }
-        return currentNode;
     }
     iterate(currentNode: HierarchyNode, callback: Function, indentAmount: Number){
         if (currentNode){
@@ -434,8 +431,10 @@ class NoteMenuModel {
         for (let note of noteList){
             if (note.hasOwnProperty("name")){
                 noteNode = new NoteNode(note.name);
-                if (note.hasOwnProperty("content")){
-                    noteNode.content = note.content;
+                for (let property in note){
+                    if (noteNode.hasOwnProperty[property]){
+                        noteNode[property] = note[property];    
+                    }
                 }
                 notes.unshift(noteNode);
             }
@@ -549,21 +548,22 @@ class NoteMenuView {
         return "<ul>" + result + "</ul>";
     }
     displayNoteHTML(node: NoteNode, noteMenuController:NoteMenuController){
-        return this.generateNodeListElement(node.id, node.name, noteMenuController);
+        return this.generateNodeListElement(node, noteMenuController);
     }
     generateNodeStyle(){
         return "style='width: 200px;'";
     }
-    generateNodeListElement(nodeId:String, nodeName:String, noteMenuController:NoteMenuController){
+    generateNodeListElement(node:NoteNode, noteMenuController:NoteMenuController){
         return ""                                                                                       +
             "<li "+this.generateNodeStyle()+">"                                                         +
-                "<div class='note' id='"+nodeId+"'>"                                                    +
+                "<div class='note' id='"+node.id+"'>"                                                   +
                     "<span class='note-name' "+this.generateNodeNameStyle()+">"                         +
-                        nodeName                                                                        +
+                        node.name                                                                       +
                     "</span>"                                                                           +
                     this.generateNodeButtons()                                                          +
                 "</div>"                                                                                +
-                this.displayLabels(nodeId, noteMenuController)                                          +
+                this.displayLabels(node.id, noteMenuController)                                         +
+                this.displayNoteContent(node)                                                           +
             "</li>"
     }
     generateNodeNameStyle(){
@@ -659,13 +659,19 @@ class NoteMenuView {
             this.displayNote(noteId, noteMenuController);
         })
     }
+    displayNoteContent(note:NoteNode){
+        return "" +
+            "<div class='note-list-item-content'>" +
+                note.content                    +
+            "</div>"
+    }
     displayLabels(noteId:String, noteMenuController:NoteMenuController){
         let note = noteMenuController.findNote(noteId);
         let result = "";
         let labels = note.labelIds;
         for (let label of labels){
             let node = noteMenuController.hierarchyController.find(label);
-            result += "<span>"+node.name+"</span>";
+            result += "<span class='note-label-span'>"+node.name+"</span>";
         }
         return "<div class='labels'>" + result + "</div>";
 
@@ -723,15 +729,15 @@ Promise.all(
         $.get("/getNotes")
     ]
 ).then((results)=>{
-   let hierarchyModel = new HierarchyModel(
-        JSON.parse(results[0]).hierarchy
+    let hierarchyModel = new HierarchyModel(
+        JSON.parse(results[0])
     )
     
     // Initialize Application
     let hierarchyView = new HierarchyView($("#hierarchy-area"));
     let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
     let noteMenuModel = new NoteMenuModel(
-        JSON.parse(results[1]).notes
+        JSON.parse(results[1])
     );
     let noteMenuView = new NoteMenuView($("#notes-area"));
     let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
@@ -746,7 +752,7 @@ Promise.all(
         $.ajax({
             type: "POST",
             url: "/saveHierarchy",
-            data: {hierarchy: root},
+            data: {hierarchy: JSON.stringify(root)},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
         })
@@ -755,7 +761,7 @@ Promise.all(
         $.ajax({
             type: "POST",
             url: "/saveNotes",
-            data: {notes: notes},
+            data: {notes: JSON.stringify(notes)},
             success: (data) => {console.log("Saved Hierarchy")},
             dataType: "application/json"
         })

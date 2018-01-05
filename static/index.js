@@ -233,26 +233,24 @@ var HierarchyModel = (function () {
     HierarchyModel.prototype.buildHierarchyFromObject = function (hierarchy, currentNode) {
         var childNode = null;
         if (hierarchy.hasOwnProperty("name")) {
-            currentNode.name = hierarchy.name;
+            if (hierarchy.hasOwnProperty("children")) {
+                for (var child in hierarchy.children) {
+                    childNode = this.buildHierarchyFromObject(hierarchy.children[child], new HierarchyNode("", []));
+                    if (childNode) {
+                        currentNode.children.push(childNode);
+                    }
+                }
+            }
+            for (var property in hierarchy) {
+                if (currentNode.hasOwnProperty[property] && property !== "children") {
+                    currentNode[property] = hierarchy[property];
+                }
+            }
+            return currentNode;
         }
         else {
             return null;
         }
-        if (hierarchy.hasOwnProperty("children")) {
-            for (var child in hierarchy.children) {
-                childNode = this.buildHierarchyFromObject(hierarchy.children[child], new HierarchyNode("", []));
-                if (childNode) {
-                    currentNode.children.push(childNode);
-                }
-            }
-        }
-        if (hierarchy.hasOwnProperty("visible")) {
-            currentNode.visible = hierarchy.visible;
-        }
-        if (hierarchy.hasOwnProperty("collapsed")) {
-            currentNode.collapsed = hierarchy.collapsed;
-        }
-        return currentNode;
     };
     HierarchyModel.prototype.iterate = function (currentNode, callback, indentAmount) {
         if (currentNode) {
@@ -433,8 +431,10 @@ var NoteMenuModel = (function () {
             var note = noteList_1[_i];
             if (note.hasOwnProperty("name")) {
                 noteNode = new NoteNode(note.name);
-                if (note.hasOwnProperty("content")) {
-                    noteNode.content = note.content;
+                for (var property in note) {
+                    if (noteNode.hasOwnProperty[property]) {
+                        noteNode[property] = note[property];
+                    }
                 }
                 notes.unshift(noteNode);
             }
@@ -544,21 +544,22 @@ var NoteMenuView = (function () {
         return "<ul>" + result + "</ul>";
     };
     NoteMenuView.prototype.displayNoteHTML = function (node, noteMenuController) {
-        return this.generateNodeListElement(node.id, node.name, noteMenuController);
+        return this.generateNodeListElement(node, noteMenuController);
     };
     NoteMenuView.prototype.generateNodeStyle = function () {
         return "style='width: 200px;'";
     };
-    NoteMenuView.prototype.generateNodeListElement = function (nodeId, nodeName, noteMenuController) {
+    NoteMenuView.prototype.generateNodeListElement = function (node, noteMenuController) {
         return "" +
             "<li " + this.generateNodeStyle() + ">" +
-            "<div class='note' id='" + nodeId + "'>" +
+            "<div class='note' id='" + node.id + "'>" +
             "<span class='note-name' " + this.generateNodeNameStyle() + ">" +
-            nodeName +
+            node.name +
             "</span>" +
             this.generateNodeButtons() +
             "</div>" +
-            this.displayLabels(nodeId, noteMenuController) +
+            this.displayLabels(node.id, noteMenuController) +
+            this.displayNoteContent(node) +
             "</li>";
     };
     NoteMenuView.prototype.generateNodeNameStyle = function () {
@@ -650,6 +651,12 @@ var NoteMenuView = (function () {
             _this.displayNote(noteId, noteMenuController);
         });
     };
+    NoteMenuView.prototype.displayNoteContent = function (note) {
+        return "" +
+            "<div class='note-list-item-content'>" +
+            note.content +
+            "</div>";
+    };
     NoteMenuView.prototype.displayLabels = function (noteId, noteMenuController) {
         var note = noteMenuController.findNote(noteId);
         var result = "";
@@ -657,7 +664,7 @@ var NoteMenuView = (function () {
         for (var _i = 0, labels_1 = labels; _i < labels_1.length; _i++) {
             var label = labels_1[_i];
             var node = noteMenuController.hierarchyController.find(label);
-            result += "<span>" + node.name + "</span>";
+            result += "<span class='note-label-span'>" + node.name + "</span>";
         }
         return "<div class='labels'>" + result + "</div>";
     };
@@ -712,11 +719,11 @@ Promise.all([
     $.get("/getHierarchy"),
     $.get("/getNotes")
 ]).then(function (results) {
-    var hierarchyModel = new HierarchyModel(JSON.parse(results[0]).hierarchy);
+    var hierarchyModel = new HierarchyModel(JSON.parse(results[0]));
     // Initialize Application
     var hierarchyView = new HierarchyView($("#hierarchy-area"));
     var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
-    var noteMenuModel = new NoteMenuModel(JSON.parse(results[1]).notes);
+    var noteMenuModel = new NoteMenuModel(JSON.parse(results[1]));
     var noteMenuView = new NoteMenuView($("#notes-area"));
     var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
     hierarchyController.noteMenuController = noteMenuController;
@@ -728,7 +735,7 @@ Promise.all([
         $.ajax({
             type: "POST",
             url: "/saveHierarchy",
-            data: { hierarchy: root },
+            data: { hierarchy: JSON.stringify(root) },
             success: function (data) { console.log("Saved Hierarchy"); },
             dataType: "application/json"
         });
@@ -737,7 +744,7 @@ Promise.all([
         $.ajax({
             type: "POST",
             url: "/saveNotes",
-            data: { notes: notes },
+            data: { notes: JSON.stringify(notes) },
             success: function (data) { console.log("Saved Hierarchy"); },
             dataType: "application/json"
         });
