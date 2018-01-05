@@ -618,7 +618,7 @@ class NoteMenuView {
         return this.generateNodeListElement(node, noteMenuController);
     }
     generateNodeStyle(){
-        return "style='width: 200px;'";
+        return "style='width: 500px;'";
     }
     generateNodeListElement(node:NoteNode, noteMenuController:NoteMenuController){
         if (node){

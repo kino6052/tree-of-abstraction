@@ -623,7 +623,7 @@ var NoteMenuView = (function () {
         return this.generateNodeListElement(node, noteMenuController);
     };
     NoteMenuView.prototype.generateNodeStyle = function () {
-        return "style='width: 200px;'";
+        return "style='width: 500px;'";
     };
     NoteMenuView.prototype.generateNodeListElement = function (node, noteMenuController) {
         if (node) {
