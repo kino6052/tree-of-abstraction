@@ -733,9 +733,17 @@ var NoteMenuView = (function () {
         });
     };
     NoteMenuView.prototype.displayNoteContent = function (note) {
+        var content = "";
+        if (note) {
+            var paragraphs = note.content.split("\n");
+            for (var _i = 0, paragraphs_1 = paragraphs; _i < paragraphs_1.length; _i++) {
+                var paragraph = paragraphs_1[_i];
+                content += "<p>" + paragraph + "</p>";
+            }
+        }
         return "" +
             "<div class='note-list-item-content'>" +
-            note.content +
+            content +
             "</div>";
     };
     NoteMenuView.prototype.displayLabels = function (noteId, noteMenuController) {

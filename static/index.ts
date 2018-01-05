@@ -731,9 +731,16 @@ class NoteMenuView {
         })
     }
     displayNoteContent(note:NoteNode){
+        let content = "";
+        if (note){
+            let paragraphs = note.content.split("\n");
+            for (let paragraph of paragraphs){
+                content += "<p>" + paragraph + "</p>";
+            }    
+        }
         return "" +
-            "<div class='note-list-item-content'>" +
-                note.content                    +
+            "<div class='note-list-item-content'>"  +
+                content                             +
             "</div>"
     }
     displayLabels(noteId:String, noteMenuController:NoteMenuController){
