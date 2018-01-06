@@ -6,9 +6,9 @@ const jsonParser = bodyParser.json();
 
 app.listen(process.env.PORT);
 app.use(bodyParser.urlencoded({
-    extended: true
+    extended: true,
+    limit: '50mb'
 }));
-app.use(bodyParser.json());
 app.use('/', express.static('static'));
 app.use('/dependencies', express.static('bower_components'));
 app.get('/getHierarchy', function (req, res) {
