@@ -119,6 +119,10 @@ var HierarchyController = (function () {
         }
         return noteIds;
     };
+    // Global State
+    HierarchyController.prototype.isCtrlPressed = function () {
+        return this.shortcutController.getIsCtrlPressed();
+    };
     return HierarchyController;
 }());
 var HierarchyModel = (function () {
@@ -434,13 +438,26 @@ var HierarchyView = (function () {
             var $node = $(e.currentTarget);
             var nodeId = $node.parent(".node").attr("id");
             var node = hierarchyController.find(nodeId);
-            var noteIds = [];
-            if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id) {
-                hierarchyController.noteMenuController.display();
+            if (hierarchyController.isCtrlPressed()) {
+                $(".node-name").on("click", function (e) {
+                    var $secondNode = $(e.currentTarget);
+                    var secondNodeId = $secondNode.parent(".node").attr("id");
+                    if (nodeId !== secondNodeId) {
+                        var secondNode = hierarchyController.find(nodeId);
+                        hierarchyController.changeParent(node, secondNode);
+                        hierarchyController.display();
+                    }
+                });
             }
             else {
-                noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
-                hierarchyController.noteMenuController.displayNotesByIds(noteIds);
+                var noteIds = [];
+                if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id) {
+                    hierarchyController.noteMenuController.display();
+                }
+                else {
+                    noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
+                    hierarchyController.noteMenuController.displayNotesByIds(noteIds);
+                }
             }
         });
         $(".collapse").on("click", function (e) {
@@ -845,6 +862,33 @@ var NoteMenuView = (function () {
     };
     return NoteMenuView;
 }());
+// AUX Classes
+var ShortcutController = (function () {
+    function ShortcutController() {
+        this.isCtrlPressed = false;
+        this.init();
+    }
+    ShortcutController.prototype.setAllKeysToFalse = function () {
+        this.isCtrlPressed = false;
+    };
+    ShortcutController.prototype.init = function () {
+        var _this = this;
+        $(document).keydown(function (event) {
+            _this.setAllKeysToFalse();
+            if (event.which == 17) {
+                _this.isCtrlPressed = true;
+                console.log("Ctrl is Pressed");
+            }
+        });
+        $(document).keyup(function (event) {
+            _this.setAllKeysToFalse();
+        });
+    };
+    ShortcutController.prototype.getIsCtrlPressed = function () {
+        return this.isCtrlPressed;
+    };
+    return ShortcutController;
+}());
 Promise.all([
     $.get("/getHierarchy"),
     $.get("/getNotes")
@@ -856,7 +900,9 @@ Promise.all([
     var noteMenuModel = new NoteMenuModel(JSON.parse(results[1]).notes);
     var noteMenuView = new NoteMenuView($("#notes-area"));
     var noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    var shortcutController = new ShortcutController();
     hierarchyController.noteMenuController = noteMenuController;
+    hierarchyController.shortcutController = shortcutController;
     noteMenuController.hierarchyController = hierarchyController;
     hierarchyController.display();
     noteMenuController.display();

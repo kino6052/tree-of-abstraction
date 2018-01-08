@@ -36,6 +36,7 @@ class HierarchyController {
     hierarchyModel: HierarchyModel
     hierarchyView: HierarchyView
     noteMenuController: NoteMenuController
+    shortcutController: ShortcutController
     // Constructor
     constructor(hierarchyModel: HierarchyModel, hierarchyView: HierarchyView) {
         this.hierarchyModel = hierarchyModel;
@@ -122,6 +123,10 @@ class HierarchyController {
             });
         }
         return noteIds;
+    }
+    // Global State
+    isCtrlPressed(){
+        return this.shortcutController.getIsCtrlPressed();
     }
 }
 
@@ -423,12 +428,24 @@ class HierarchyView {
             let $node = $(e.currentTarget);
             let nodeId = $node.parent(".node").attr("id");
             let node = hierarchyController.find(nodeId);
-            let noteIds = []
-            if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id){
-                hierarchyController.noteMenuController.display();
+            if (hierarchyController.isCtrlPressed()){
+                $(".node-name").on("click", (e)=>{
+                    let $secondNode = $(e.currentTarget);
+                    let secondNodeId = $secondNode.parent(".node").attr("id");
+                    if (nodeId !== secondNodeId){ // If not the Same Node
+                        let secondNode = hierarchyController.find(nodeId);
+                        hierarchyController.changeParent(node, secondNode);
+                        hierarchyController.display();
+                    }
+                });
             } else {
-                noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
-                hierarchyController.noteMenuController.displayNotesByIds(noteIds);
+                let noteIds = []
+                if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id){
+                    hierarchyController.noteMenuController.display();
+                } else {
+                    noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
+                    hierarchyController.noteMenuController.displayNotesByIds(noteIds);
+                }   
             }
         });
         $(".collapse").on("click", (e)=>{
@@ -840,6 +857,37 @@ class NoteMenuView {
     }
 }
 
+// AUX Classes
+class ShortcutController {
+    isCtrlPressed: bool
+    constructor(){
+        this.isCtrlPressed = false;
+        this.init();
+    }
+    setAllKeysToFalse(){
+        this.isCtrlPressed = false;
+    }
+    init(){
+        $(document).keydown(
+            (event) => {
+                this.setAllKeysToFalse();
+                if ( event.which == 17 ) {
+                    this.isCtrlPressed = true;
+                    console.log("Ctrl is Pressed");
+                }
+            }
+        );
+        $(document).keyup(
+            (event) => {
+                this.setAllKeysToFalse();
+            }
+        )
+    }
+    getIsCtrlPressed(){
+        return this.isCtrlPressed;
+    }
+}
+
 Promise.all(
     [
         $.get("/getHierarchy"),
@@ -858,8 +906,10 @@ Promise.all(
     );
     let noteMenuView = new NoteMenuView($("#notes-area"));
     let noteMenuController = new NoteMenuController(noteMenuModel, noteMenuView);
+    let shortcutController = new ShortcutController();
     
     hierarchyController.noteMenuController = noteMenuController;
+    hierarchyController.shortcutController = shortcutController;
     noteMenuController.hierarchyController = hierarchyController;
     
     hierarchyController.display();
