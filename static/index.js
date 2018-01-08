@@ -61,6 +61,22 @@ var HierarchyController = (function () {
         this.hierarchyModel.removeNoteId(noteNodeId, this);
         this.display();
     };
+    HierarchyController.prototype.changeParent = function (newParentNode, childNode) {
+        // Remove Child Node from Old Parent
+        var parentNode = this.findParentNode(childNode);
+        if (parentNode) {
+            parentNode.children = parentNode.children.filter(function (node) {
+                if (node.id !== childNode.id) {
+                    return node;
+                }
+            });
+        }
+        else {
+            return; // ROOT node shouldn't be let to change parents
+        }
+        // Add Child to New Parent
+        newParentNode.children.unshift(childNode);
+    };
     // Display
     HierarchyController.prototype.display = function () {
         this.hierarchyView.display(this);
@@ -85,6 +101,9 @@ var HierarchyController = (function () {
     HierarchyController.prototype.findByCollapsingHierarchy = function (nameSubstring) {
         this.hierarchyModel.findByCollapsingHierarchy(nameSubstring);
         this.display();
+    };
+    HierarchyController.prototype.findParentNode = function (node) {
+        return this.hierarchyModel.findParentNode(this.hierarchyModel.hierarchyRoot, node.id);
     };
     HierarchyController.prototype.iterate = function (currentNode, callback) {
         this.hierarchyModel.iterate(currentNode, callback, 0);
@@ -183,6 +202,22 @@ var HierarchyModel = (function () {
                 resultNode = this.findNode(childNode, nodeId);
                 if (resultNode && resultNode.id === nodeId) {
                     return resultNode;
+                }
+            }
+            return resultNode;
+        }
+    };
+    HierarchyModel.prototype.findParentNode = function (currentNode, nodeId) {
+        if (currentNode.id === nodeId) {
+            return currentNode;
+        }
+        else {
+            var resultNode = null;
+            for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
+                var childNode = _a[_i];
+                resultNode = this.findParentNode(childNode, nodeId);
+                if (resultNode && resultNode.id === nodeId) {
+                    return currentNode;
                 }
             }
             return resultNode;
@@ -1182,6 +1217,26 @@ exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNode = function (test) {
     test.equals(1, noteNode.labelIds.length);
     hierarchyController.removeNoteId(noteNode.id);
     test.equals(0, node002.noteIds.length);
+    test.done();
+};
+exports.HIERARCHY_CONTROLLER_ChangeParent = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    var node003 = new HierarchyNode("Test", []);
+    hierarchyController.add(node003, node002.id);
+    hierarchyController.changeParent(hierarchyModel.hierarchyRoot, node003);
+    test.equals(2, hierarchyModel.hierarchyRoot.children.length);
+    test.equals(0, node002.children.length);
     test.done();
 };
 exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function (test) {
