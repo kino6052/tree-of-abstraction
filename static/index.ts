@@ -32,31 +32,16 @@ class BaseNode {
 
 // Hierarchy Classes
 class HierarchyController {
+    // Private Fields
     hierarchyModel: HierarchyModel
     hierarchyView: HierarchyView
     noteMenuController: NoteMenuController
+    // Constructor
     constructor(hierarchyModel: HierarchyModel, hierarchyView: HierarchyView) {
         this.hierarchyModel = hierarchyModel;
         this.hierarchyView = hierarchyView;
     }
-    display(){
-        this.hierarchyView.display(this);
-        this.hierarchyView.initLogic(this);
-    }
-    collapseNode(nodeId:String){
-        this.hierarchyModel.collapseNode(nodeId);
-        this.display();
-    }
-    edit(nodeId:String){
-        this.hierarchyView.edit(nodeId, this);
-    }
-    updateNodeName(nodeId:String, newNodeName:String){
-        this.hierarchyModel.updateNodeName(nodeId, newNodeName);
-        this.display();
-    }
-    saveContent(nodeId:String, newContent:String){
-        this.hierarchyModel.save(nodeId:String, newContent:String);
-    }
+    // CRUD
     add(newNode:HierarchyNode, nodeId:String){
         this.hierarchyModel.add(newNode, nodeId:String);
         this.display();
@@ -66,6 +51,34 @@ class HierarchyController {
         this.noteMenuController.removeLabel(nodeId);
         this.display();
     }
+    updateNodeName(nodeId:String, newNodeName:String){
+        this.hierarchyModel.updateNodeName(nodeId, newNodeName);
+        this.display();
+    }
+    saveContent(nodeId:String, newContent:String){
+        this.hierarchyModel.save(nodeId:String, newContent:String);
+    }
+    addNoteId(hierarchyNodeId: String, noteNodeId: String){
+        let hierarchyNode = this.find(hierarchyNodeId);
+        hierarchyNode.noteIds.push(noteNodeId);
+    }
+    removeNoteId(noteNodeId: String){
+        this.hierarchyModel.removeNoteId(noteNodeId, this);
+        this.display();
+    }
+    // Display
+    display(){
+        this.hierarchyView.display(this);
+        this.hierarchyView.initLogic(this);
+    }
+    edit(nodeId:String){
+        this.hierarchyView.edit(nodeId, this);
+    }
+    collapseNode(nodeId:String){
+        this.hierarchyModel.collapseNode(nodeId);
+        this.display();
+    }
+    // Search
     find(nodeId:String){
         let hierarchyRoot = this.hierarchyModel.hierarchyRoot;
         return this.hierarchyModel.findNode(hierarchyRoot, nodeId);
@@ -76,14 +89,6 @@ class HierarchyController {
     }
     findByCollapsingHierarchy(nameSubstring:String){
         this.hierarchyModel.findByCollapsingHierarchy(nameSubstring);
-        this.display();
-    }
-    addNoteId(hierarchyNodeId: String, noteNodeId: String){
-        let hierarchyNode = this.find(hierarchyNodeId);
-        hierarchyNode.noteIds.push(noteNodeId);
-    }
-    removeNoteId(noteNodeId: String){
-        this.hierarchyModel.removeNoteId(noteNodeId, this);
         this.display();
     }
     iterate(currentNode: HierarchyNode, callback: Function){
@@ -99,150 +104,6 @@ class HierarchyController {
             });
         }
         return noteIds;
-    }
-}
-
-class HierarchyView {
-    hierarchyController: HierarchyController
-    hierarchyWindow: Object
-    constructor(hierarchyWindow: Object){
-        this.hierarchyWindow = hierarchyWindow;
-    }
-    displayHierarchyView(hierarchyController:HierarchyController){
-        let hierarchyModel = hierarchyController.hierarchyModel;
-        return "" + 
-            "<div id='search-area'>"    +
-                this.displaySearchBar() +
-            "</div>"                    +
-            "<div id='hierarchy-view'>" + 
-                this.displayHierarchyModelHTML(hierarchyModel) + // TODO: Change displayHierarchyModelHTML Signature to Includ Controller
-            "</div>";
-    }
-    displayHierarchyModelHTML(hierarchyModel:HierarchyModel){
-        let result = "";
-        let previousIndentAmount = 0;
-        let hierarchyModel = hierarchyModel.getHierarchyModelAsObject();
-        hierarchyModel.iterate(
-            hierarchyModel.hierarchyRoot, 
-            (node: HierarchyNode, indentAmount: Number) => {
-                if (indentAmount > previousIndentAmount){
-                    // for (let i = 0; i < indentAmount - previousIndentAmount; i++){ 
-                        result += "<ul>";
-                    // }
-                } else 
-                if (indentAmount < previousIndentAmount){
-                    for (let i = 0; i < previousIndentAmount - indentAmount; i++){ // UL tags must match indentation levels
-                        result += "</ul>";
-                    }
-                }
-                previousIndentAmount = indentAmount;
-                result += this.displayNodeHTML(node);
-            },
-            previousIndentAmount
-        );
-        for (let i = 0; i < previousIndentAmount; i++){
-            result += "</ul>";
-        }
-        return "" + 
-            "<ul>"      + 
-                result  + 
-            "</ul>";
-    }
-    displaySearchBar(){
-        return ""                           + 
-            "<input id='hierarchy-search-input' placeholder='Search'></input>" +
-            "<button id='hierarchy-search-button'>Search</button>";
-    }
-    displayNodeHTML(node: HierarchyNode){
-        if (node.visible){
-            return this.generateNodeListElement(node.id, node.name);
-        } else {
-            return "";
-        }
-    }
-    generateNodeStyle(){
-        return "style='width: 200px;'";
-    }
-    generateNodeListElement(nodeId:String, nodeName:String){
-        return ""                                                                                       +
-            "<li "+this.generateNodeStyle()+">"                                                         +
-                "<div class='node' id='"+nodeId+"'>"                                                    +
-                    "<span class='node-name' "+this.generateNodeNameStyle()+">"                         +
-                        nodeName                                                                        +
-                    "</span>"                                                                           +
-                    this.generateNodeButtons()                                                          +
-                "</div>"                                                                                +
-            "</li>"
-    }
-    generateNodeNameStyle(){
-        return "style='font-weight: bold;'";
-    }
-    generateNodeButtons(){
-        return "" +
-                "<div class='node-buttons'>"                                                            +
-                    "<span class='collapse'> collapse </span>|"                                         + 
-                    "<span class='edit'> edit </span>|"                                                 + 
-                    "<span class='add'> add </span>|"                                                   + 
-                    "<span class='remove'> remove </span>"                                              +
-                "</div>";
-    }
-    display(hierarchyController: HierarchyController){
-        this.hierarchyWindow.html(this.displayHierarchyView(hierarchyController));
-    }
-    initLogic(hierarchyController: HierarchyController){
-        $(".node-name").on("click", (e)=>{
-            let $node = $(e.currentTarget);
-            let nodeId = $node.parent(".node").attr("id");
-            let node = hierarchyController.find(nodeId);
-            let noteIds = []
-            if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id){
-                hierarchyController.noteMenuController.display();
-            } else {
-                noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
-                hierarchyController.noteMenuController.displayNotesByIds(noteIds);
-            }
-        });
-        $(".collapse").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).parents(".node")[0].id;
-            hierarchyController.collapseNode(nodeId);
-        })
-        $(".edit").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).parents(".node")[0].id;
-            hierarchyController.edit(nodeId);
-        })
-        $(".add").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).parents(".node")[0].id;
-            hierarchyController.add(new HierarchyNode("New Node", []), nodeId);
-        })
-        $(".remove").on("click", (e)=>{
-            let nodeId = $(e.currentTarget).parents(".node")[0].id;
-            hierarchyController.remove(nodeId);
-        })
-        $("#hierarchy-search-button").on("click", (e)=>{
-            
-            let $button = $(e.currentTarget);
-            let $input = $button.siblings("#hierarchy-search-input");
-            let input = $input.val();
-            
-            hierarchyController.findByCollapsingHierarchy(input);
-        })
-    }
-    edit(nodeId: String, hierarchyController: HierarchyController){
-        let node = $("#"+nodeId);
-        let nodeName = node.find(".node-name").text();
-        let html = ""                                   +
-            "<input placeholder='" + nodeName + "'>" +
-            "<button class='save'>Save</button>"        + 
-            "<button class='cancel'>Cancel</button>";
-        node.html(html);
-        node.find(".cancel").on("click", ()=>{
-            hierarchyController.display();
-        });
-        node.find(".save").on("click", ()=>{
-            let newNodeName = node.find("input").val();
-            hierarchyController.updateNodeName(nodeId, newNodeName);
-            hierarchyController.display();
-        });
     }
 }
 
@@ -438,6 +299,150 @@ class HierarchyModel {
     }
 }
 
+class HierarchyView {
+    hierarchyController: HierarchyController
+    hierarchyWindow: Object
+    constructor(hierarchyWindow: Object){
+        this.hierarchyWindow = hierarchyWindow;
+    }
+    displayHierarchyView(hierarchyController:HierarchyController){
+        let hierarchyModel = hierarchyController.hierarchyModel;
+        return "" + 
+            "<div id='search-area'>"    +
+                this.displaySearchBar() +
+            "</div>"                    +
+            "<div id='hierarchy-view'>" + 
+                this.displayHierarchyModelHTML(hierarchyModel) + // TODO: Change displayHierarchyModelHTML Signature to Includ Controller
+            "</div>";
+    }
+    displayHierarchyModelHTML(hierarchyModel:HierarchyModel){
+        let result = "";
+        let previousIndentAmount = 0;
+        let hierarchyModel = hierarchyModel.getHierarchyModelAsObject();
+        hierarchyModel.iterate(
+            hierarchyModel.hierarchyRoot, 
+            (node: HierarchyNode, indentAmount: Number) => {
+                if (indentAmount > previousIndentAmount){
+                    // for (let i = 0; i < indentAmount - previousIndentAmount; i++){ 
+                        result += "<ul>";
+                    // }
+                } else 
+                if (indentAmount < previousIndentAmount){
+                    for (let i = 0; i < previousIndentAmount - indentAmount; i++){ // UL tags must match indentation levels
+                        result += "</ul>";
+                    }
+                }
+                previousIndentAmount = indentAmount;
+                result += this.displayNodeHTML(node);
+            },
+            previousIndentAmount
+        );
+        for (let i = 0; i < previousIndentAmount; i++){
+            result += "</ul>";
+        }
+        return "" + 
+            "<ul>"      + 
+                result  + 
+            "</ul>";
+    }
+    displaySearchBar(){
+        return ""                           + 
+            "<input id='hierarchy-search-input' placeholder='Search'></input>" +
+            "<button id='hierarchy-search-button'>Search</button>";
+    }
+    displayNodeHTML(node: HierarchyNode){
+        if (node.visible){
+            return this.generateNodeListElement(node.id, node.name);
+        } else {
+            return "";
+        }
+    }
+    generateNodeStyle(){
+        return "style='width: 200px;'";
+    }
+    generateNodeListElement(nodeId:String, nodeName:String){
+        return ""                                                                                       +
+            "<li "+this.generateNodeStyle()+">"                                                         +
+                "<div class='node' id='"+nodeId+"'>"                                                    +
+                    "<span class='node-name' "+this.generateNodeNameStyle()+">"                         +
+                        nodeName                                                                        +
+                    "</span>"                                                                           +
+                    this.generateNodeButtons()                                                          +
+                "</div>"                                                                                +
+            "</li>"
+    }
+    generateNodeNameStyle(){
+        return "style='font-weight: bold;'";
+    }
+    generateNodeButtons(){
+        return "" +
+                "<div class='node-buttons'>"                                                            +
+                    "<span class='collapse'> collapse </span>|"                                         + 
+                    "<span class='edit'> edit </span>|"                                                 + 
+                    "<span class='add'> add </span>|"                                                   + 
+                    "<span class='remove'> remove </span>"                                              +
+                "</div>";
+    }
+    display(hierarchyController: HierarchyController){
+        this.hierarchyWindow.html(this.displayHierarchyView(hierarchyController));
+    }
+    initLogic(hierarchyController: HierarchyController){
+        $(".node-name").on("click", (e)=>{
+            let $node = $(e.currentTarget);
+            let nodeId = $node.parent(".node").attr("id");
+            let node = hierarchyController.find(nodeId);
+            let noteIds = []
+            if (hierarchyController.hierarchyModel.hierarchyRoot.id === node.id){
+                hierarchyController.noteMenuController.display();
+            } else {
+                noteIds = hierarchyController.getNoteIdsUpToThisNode(node);
+                hierarchyController.noteMenuController.displayNotesByIds(noteIds);
+            }
+        });
+        $(".collapse").on("click", (e)=>{
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
+            hierarchyController.collapseNode(nodeId);
+        })
+        $(".edit").on("click", (e)=>{
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
+            hierarchyController.edit(nodeId);
+        })
+        $(".add").on("click", (e)=>{
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
+            hierarchyController.add(new HierarchyNode("New Node", []), nodeId);
+        })
+        $(".remove").on("click", (e)=>{
+            let nodeId = $(e.currentTarget).parents(".node")[0].id;
+            hierarchyController.remove(nodeId);
+        })
+        $("#hierarchy-search-button").on("click", (e)=>{
+            
+            let $button = $(e.currentTarget);
+            let $input = $button.siblings("#hierarchy-search-input");
+            let input = $input.val();
+            
+            hierarchyController.findByCollapsingHierarchy(input);
+        })
+    }
+    edit(nodeId: String, hierarchyController: HierarchyController){
+        let node = $("#"+nodeId);
+        let nodeName = node.find(".node-name").text();
+        let html = ""                                   +
+            "<input placeholder='" + nodeName + "'>" +
+            "<button class='save'>Save</button>"        + 
+            "<button class='cancel'>Cancel</button>";
+        node.html(html);
+        node.find(".cancel").on("click", ()=>{
+            hierarchyController.display();
+        });
+        node.find(".save").on("click", ()=>{
+            let newNodeName = node.find("input").val();
+            hierarchyController.updateNodeName(nodeId, newNodeName);
+            hierarchyController.display();
+        });
+    }
+}
+
 class HierarchyNode extends BaseNode {
     collapsed: Boolean;
     children: Array<BaseNode>;
@@ -461,73 +466,6 @@ class NoteNode extends BaseNode {
         this.visible = true;
         this.content = "";
         this.labelIds = [];
-    }
-}
-
-class NoteMenuModel {
-    notes: Array<BaseNode>;
-    constructor(noteList:Array<BaseNode>){
-        this.notes = this.convertJsonArrayToNoteArray(noteList);
-    }
-    convertJsonArrayToNoteArray(noteList:Array<BaseNode>){
-        let notes = [];
-        let noteNode;
-        for (let note of noteList){
-            if (note.hasOwnProperty("name")){
-                noteNode = new NoteNode(note.name);
-                for (let property in note){
-                    if (noteNode[property] !== undefined){
-                        console.log(property, note[property]);
-                        noteNode[property] = note[property];    
-                    }
-                }
-                notes.unshift(noteNode);
-            }
-        }
-        return notes;
-    }
-    add(note:NoteNode){
-        this.notes.unshift(note);
-    }
-    remove(noteId:string){
-        let node = this.findNode(noteId);
-        if (node){
-            this.notes = this.notes.filter((el)=>{
-                if (el.id !== noteId){
-                    return el;
-                }
-            });
-        }
-    }
-    findNode(noteId:string){
-        for (let note of this.notes){
-            if (note.id === noteId){
-                return note;
-            }
-        }
-        return null;
-    }
-    updateNoteContent(noteId:String, newContent:String){
-        let node = this.findNode(noteId);
-        node.content = newContent;
-    }
-    updateNodeName(nodeId:String, newNodeName:String){
-        let node = this.findNode(nodeId);
-        node.name = newNodeName;
-    }
-    removeLabel(hierarchyNodeId:String, noteMenuController:NoteMenuController){
-        let isFound = false;
-        if (hierarchyNodeId){
-            for (let note of this.notes){
-                note.labelIds = note.labelIds.filter((el)=>{
-                    if(el !== hierarchyNodeId){
-                        return el;
-                    } else {
-                        isFound = true;
-                    }
-                });
-            }
-        }
     }
 }
 
@@ -595,6 +533,73 @@ class NoteMenuController {
     }
     findHierarchyNodesAsList(name:String){
         return this.hierarchyController.findAsList(name);
+    }
+}
+
+class NoteMenuModel {
+    notes: Array<BaseNode>;
+    constructor(noteList:Array<BaseNode>){
+        this.notes = this.convertJsonArrayToNoteArray(noteList);
+    }
+    convertJsonArrayToNoteArray(noteList:Array<BaseNode>){
+        let notes = [];
+        let noteNode;
+        for (let note of noteList){
+            if (note.hasOwnProperty("name")){
+                noteNode = new NoteNode(note.name);
+                for (let property in note){
+                    if (noteNode[property] !== undefined){
+                        console.log(property, note[property]);
+                        noteNode[property] = note[property];    
+                    }
+                }
+                notes.unshift(noteNode);
+            }
+        }
+        return notes;
+    }
+    add(note:NoteNode){
+        this.notes.unshift(note);
+    }
+    remove(noteId:string){
+        let node = this.findNode(noteId);
+        if (node){
+            this.notes = this.notes.filter((el)=>{
+                if (el.id !== noteId){
+                    return el;
+                }
+            });
+        }
+    }
+    findNode(noteId:string){
+        for (let note of this.notes){
+            if (note.id === noteId){
+                return note;
+            }
+        }
+        return null;
+    }
+    updateNoteContent(noteId:String, newContent:String){
+        let node = this.findNode(noteId);
+        node.content = newContent;
+    }
+    updateNodeName(nodeId:String, newNodeName:String){
+        let node = this.findNode(nodeId);
+        node.name = newNodeName;
+    }
+    removeLabel(hierarchyNodeId:String, noteMenuController:NoteMenuController){
+        let isFound = false;
+        if (hierarchyNodeId){
+            for (let note of this.notes){
+                note.labelIds = note.labelIds.filter((el)=>{
+                    if(el !== hierarchyNodeId){
+                        return el;
+                    } else {
+                        isFound = true;
+                    }
+                });
+            }
+        }
     }
 }
 
