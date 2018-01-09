@@ -75,6 +75,11 @@ var HierarchyController = (function () {
             return; // ROOT node shouldn't be let to change parents
         }
         // Add Child to New Parent
+        newParentNode.children = newParentNode.children.filter(function (node) {
+            if (node.id !== childNode.id) {
+                return node;
+            }
+        });
         newParentNode.children.unshift(childNode);
     };
     // Display
@@ -212,20 +217,21 @@ var HierarchyModel = (function () {
         }
     };
     HierarchyModel.prototype.findParentNode = function (currentNode, nodeId) {
-        if (currentNode.id === nodeId) {
-            return currentNode;
-        }
-        else {
-            var resultNode = null;
-            for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
-                var childNode = _a[_i];
-                resultNode = this.findParentNode(childNode, nodeId);
-                if (resultNode && resultNode.id === nodeId) {
-                    return currentNode;
+        var resultNode = null;
+        for (var _i = 0, _a = currentNode.children; _i < _a.length; _i++) {
+            var childNode = _a[_i];
+            if (childNode.id === nodeId) {
+                return currentNode;
+            }
+            else {
+                var candidate = this.findParentNode(childNode, nodeId);
+                if (candidate) {
+                    console.log(candidate);
+                    resultNode = candidate;
                 }
             }
-            return resultNode;
         }
+        return resultNode;
     };
     HierarchyModel.prototype.removeNode = function (currentNode, nodeId) {
         var recurseRemoveNode = function (parentNode, childNode, nodeId) {
@@ -434,17 +440,17 @@ var HierarchyView = (function () {
         this.hierarchyWindow.html(this.displayHierarchyView(hierarchyController));
     };
     HierarchyView.prototype.initLogic = function (hierarchyController) {
-        $(".node-name").on("click", function (e) {
-            var $node = $(e.currentTarget);
+        $(".node-name").on("click", function (e1) {
+            var $node = $(e1.currentTarget);
             var nodeId = $node.parent(".node").attr("id");
             var node = hierarchyController.find(nodeId);
             if (hierarchyController.isCtrlPressed()) {
-                $(".node-name").on("click", function (e) {
-                    var $secondNode = $(e.currentTarget);
-                    var secondNodeId = $secondNode.parent(".node").attr("id");
-                    if (nodeId !== secondNodeId) {
-                        var secondNode = hierarchyController.find(nodeId);
-                        hierarchyController.changeParent(node, secondNode);
+                $(".node-name").on("click", function (e2) {
+                    var $newParentNode = $(e2.currentTarget);
+                    var newParentNodeId = $newParentNode.parent(".node").attr("id");
+                    if (nodeId !== newParentNodeId) {
+                        var newParentNode = hierarchyController.find(newParentNodeId);
+                        hierarchyController.changeParent(newParentNode, node);
                         hierarchyController.display();
                     }
                 });
@@ -603,7 +609,6 @@ var NoteMenuModel = (function () {
                 noteNode = new NoteNode(note.name);
                 for (var property in note) {
                     if (noteNode[property] !== undefined) {
-                        console.log(property, note[property]);
                         noteNode[property] = note[property];
                     }
                 }
@@ -877,7 +882,6 @@ var ShortcutController = (function () {
             _this.setAllKeysToFalse();
             if (event.which == 17) {
                 _this.isCtrlPressed = true;
-                console.log("Ctrl is Pressed");
             }
         });
         $(document).keyup(function (event) {

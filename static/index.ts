@@ -80,6 +80,11 @@ class HierarchyController {
             return; // ROOT node shouldn't be let to change parents
         }
         // Add Child to New Parent
+        newParentNode.children = newParentNode.children.filter((node)=>{ // Make Sure There is no Same Node Already
+            if (node.id !== childNode.id){
+                return node;
+            }
+        });
         newParentNode.children.unshift(childNode);
     }
     // Display
@@ -212,18 +217,19 @@ class HierarchyModel {
         }
     }
     findParentNode(currentNode: HierarchyNode, nodeId: String){
-        if (currentNode.id === nodeId) {
-            return currentNode;
-        } else {
-            let resultNode = null;
-            for (let childNode of currentNode.children){
-                resultNode = this.findParentNode(childNode, nodeId);
-                if (resultNode && resultNode.id === nodeId){
-                    return currentNode;
+        let resultNode = null;
+        for (let childNode of currentNode.children){
+            if (childNode.id === nodeId){
+                return currentNode;
+            } else {
+                let candidate = this.findParentNode(childNode, nodeId);
+                if (candidate) {
+                    console.log(candidate);
+                    resultNode = candidate;
                 }
             }
-            return resultNode;
         }
+        return resultNode;
     }
     removeNode(currentNode: HierarchyNode, nodeId: String){
         let recurseRemoveNode = function(parentNode, childNode, nodeId){
@@ -424,17 +430,17 @@ class HierarchyView {
         this.hierarchyWindow.html(this.displayHierarchyView(hierarchyController));
     }
     initLogic(hierarchyController: HierarchyController){
-        $(".node-name").on("click", (e)=>{
-            let $node = $(e.currentTarget);
+        $(".node-name").on("click", (e1)=>{
+            let $node = $(e1.currentTarget);
             let nodeId = $node.parent(".node").attr("id");
             let node = hierarchyController.find(nodeId);
             if (hierarchyController.isCtrlPressed()){
-                $(".node-name").on("click", (e)=>{
-                    let $secondNode = $(e.currentTarget);
-                    let secondNodeId = $secondNode.parent(".node").attr("id");
-                    if (nodeId !== secondNodeId){ // If not the Same Node
-                        let secondNode = hierarchyController.find(nodeId);
-                        hierarchyController.changeParent(node, secondNode);
+                $(".node-name").on("click", (e2)=>{
+                    let $newParentNode = $(e2.currentTarget);
+                    let newParentNodeId = $newParentNode.parent(".node").attr("id");
+                    if (nodeId !== newParentNodeId){ // If not the Same Node
+                        let newParentNode = hierarchyController.find(newParentNodeId);
+                        hierarchyController.changeParent(newParentNode, node);
                         hierarchyController.display();
                     }
                 });
@@ -598,7 +604,6 @@ class NoteMenuModel {
                 noteNode = new NoteNode(note.name);
                 for (let property in note){
                     if (noteNode[property] !== undefined){
-                        console.log(property, note[property]);
                         noteNode[property] = note[property];    
                     }
                 }
@@ -873,7 +878,6 @@ class ShortcutController {
                 this.setAllKeysToFalse();
                 if ( event.which == 17 ) {
                     this.isCtrlPressed = true;
-                    console.log("Ctrl is Pressed");
                 }
             }
         );
