@@ -93,10 +93,14 @@ var HierarchyController = (function () {
         newParentNode.children.unshift(childNode);
     };
     HierarchyController.prototype.moveChildDown = function (childNode, parentNode) {
+        console.log("down");
         this.hierarchyModel.moveChildDown(childNode, parentNode);
+        this.display();
     };
     HierarchyController.prototype.moveChildUp = function (childNode, parentNode) {
+        console.log("up");
         this.hierarchyModel.moveChildUp(childNode, parentNode);
+        this.display();
     };
     // Display
     HierarchyController.prototype.display = function () {
@@ -143,6 +147,24 @@ var HierarchyController = (function () {
     // Global State
     HierarchyController.prototype.isCtrlPressed = function () {
         return this.shortcutController.getIsCtrlPressed();
+    };
+    HierarchyController.prototype.isUpPressed = function () {
+        return this.shortcutController.getIsUpPressed();
+    };
+    HierarchyController.prototype.isDownPressed = function () {
+        return this.shortcutController.getIsDownPressed();
+    };
+    HierarchyController.prototype.setCurrentSelectedNode = function (currentSelectedNode) {
+        this.shortcutController.setCurrentSelectedNode(currentSelectedNode);
+    };
+    HierarchyController.prototype.getCurrentSelectedNode = function () {
+        return this.shortcutController.getCurrentSelectedNode();
+    };
+    HierarchyController.prototype.upKeyDownCallback = function (callback) {
+        this.shortcutController.setUpKeyDownCallback(callback);
+    };
+    HierarchyController.prototype.downKeyDownCallback = function (callback) {
+        this.shortcutController.setDownKeyDownCallback(callback);
     };
     return HierarchyController;
 }());
@@ -334,11 +356,11 @@ var HierarchyModel = (function () {
         var index = 0;
         var found = false;
         parentNode.children.filter(function (node) {
-            if (!found) {
-                index++;
-            }
             if (node.id === childNode.id) {
                 found = true;
+            }
+            if (!found) {
+                index++;
             }
         });
         if (found) {
@@ -498,7 +520,17 @@ var HierarchyView = (function () {
             var $node = $(e1.currentTarget);
             var nodeId = $node.parent(".node").attr("id");
             var node = hierarchyController.find(nodeId);
+            hierarchyController.setCurrentSelectedNode(node);
+            var parentNodeId = $node.closest("li").parent().prev().find(".node").attr("id");
+            var parentNode = hierarchyController.find(parentNodeId);
             if (hierarchyController.isCtrlPressed()) {
+                console.log("test");
+                hierarchyController.upKeyDownCallback(function () {
+                    hierarchyController.moveChildUp(node, parentNode);
+                });
+                hierarchyController.downKeyDownCallback(function () {
+                    hierarchyController.moveChildDown(node, parentNode);
+                });
                 $(".node-name").on("click", function (e2) {
                     var $newParentNode = $(e2.currentTarget);
                     var newParentNodeId = $newParentNode.parent(".node").attr("id");
@@ -925,25 +957,65 @@ var NoteMenuView = (function () {
 var ShortcutController = (function () {
     function ShortcutController() {
         this.isCtrlPressed = false;
+        this.isUpPressed = false;
+        this.isDownPressed = false;
+        this.currentSelectedNode = null;
         this.init();
     }
     ShortcutController.prototype.setAllKeysToFalse = function () {
         this.isCtrlPressed = false;
+        this.isUpPressed = false;
+        this.isDownPressed = false;
+        this.upKeyDownCallback = function () {
+        };
+        this.downKeyDownCallback = function () {
+        };
     };
     ShortcutController.prototype.init = function () {
         var _this = this;
         $(document).keydown(function (event) {
-            _this.setAllKeysToFalse();
-            if (event.which == 17) {
-                _this.isCtrlPressed = true;
+            switch (event.which) {
+                case 17:
+                    _this.isCtrlPressed = true;
+                    break;
+                case 38:
+                    _this.isUpPressed = true;
+                    _this.upKeyDownCallback();
+                    break;
+                case 40:
+                    _this.isDownPressed = true;
+                    _this.downKeyDownCallback();
+                    break;
             }
         });
         $(document).keyup(function (event) {
-            _this.setAllKeysToFalse();
+            if (_this.isCtrlPressed && event.which !== 17) {
+            }
+            else {
+                _this.setAllKeysToFalse();
+            }
         });
     };
     ShortcutController.prototype.getIsCtrlPressed = function () {
         return this.isCtrlPressed;
+    };
+    ShortcutController.prototype.getIsUpPressed = function () {
+        return this.isUpPressed;
+    };
+    ShortcutController.prototype.getIsDownPressed = function () {
+        return this.isDownPressed;
+    };
+    ShortcutController.prototype.setCurrentSelectedNode = function (currentSelectedNode) {
+        this.currentSelectedNode = currentSelectedNode;
+    };
+    ShortcutController.prototype.getCurrentSelectedNode = function () {
+        return this.currentSelectedNode;
+    };
+    ShortcutController.prototype.setUpKeyDownCallback = function (callback) {
+        this.upKeyDownCallback = callback;
+    };
+    ShortcutController.prototype.setDownKeyDownCallback = function (callback) {
+        this.downKeyDownCallback = callback;
     };
     return ShortcutController;
 }());

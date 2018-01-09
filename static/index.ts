@@ -99,10 +99,14 @@ class HierarchyController {
         newParentNode.children.unshift(childNode);
     }
     moveChildDown(childNode:HierarchyNode, parentNode:HierarchyNode){
+        console.log("down");
         this.hierarchyModel.moveChildDown(childNode, parentNode);
+        this.display();
     }
     moveChildUp(childNode:HierarchyNode, parentNode:HierarchyNode){
+        console.log("up");
         this.hierarchyModel.moveChildUp(childNode, parentNode);
+        this.display();
     }
     // Display
     display(){
@@ -149,6 +153,24 @@ class HierarchyController {
     // Global State
     isCtrlPressed(){
         return this.shortcutController.getIsCtrlPressed();
+    }
+    isUpPressed(){
+        return this.shortcutController.getIsUpPressed();
+    }
+    isDownPressed(){
+        return this.shortcutController.getIsDownPressed();
+    }
+    setCurrentSelectedNode(currentSelectedNode:HierarchyNode){
+        this.shortcutController.setCurrentSelectedNode(currentSelectedNode);
+    }
+    getCurrentSelectedNode(){
+        return this.shortcutController.getCurrentSelectedNode();
+    }
+    upKeyDownCallback(callback:Function){
+        this.shortcutController.setUpKeyDownCallback(callback);
+    }
+    downKeyDownCallback(callback:Function){
+        this.shortcutController.setDownKeyDownCallback(callback);
     }
 }
 
@@ -328,11 +350,11 @@ class HierarchyModel {
         let index = 0;
         let found = false;
         parentNode.children.filter((node)=>{
-            if (!found) {
-                index++;
-            }
             if (node.id === childNode.id){
                 found = true;
+            }
+            if (!found) {
+                index++;
             }
         });
         if (found){
@@ -491,7 +513,17 @@ class HierarchyView {
             let $node = $(e1.currentTarget);
             let nodeId = $node.parent(".node").attr("id");
             let node = hierarchyController.find(nodeId);
+            hierarchyController.setCurrentSelectedNode(node);
+            let parentNodeId = $node.closest("li").parent().prev().find(".node").attr("id");
+            let parentNode = hierarchyController.find(parentNodeId);
             if (hierarchyController.isCtrlPressed()){
+                console.log("test");
+                hierarchyController.upKeyDownCallback(()=>{
+                    hierarchyController.moveChildUp(node, parentNode);
+                });
+                hierarchyController.downKeyDownCallback(()=>{
+                    hierarchyController.moveChildDown(node, parentNode);
+                });
                 $(".node-name").on("click", (e2)=>{
                     let $newParentNode = $(e2.currentTarget);
                     let newParentNodeId = $newParentNode.parent(".node").attr("id");
@@ -921,31 +953,78 @@ class NoteMenuView {
 
 // AUX Classes
 class ShortcutController {
+    currentSelectedNode: HierarchyNode
     isCtrlPressed: bool
+    isUpPressed: bool
+    isDownPressed: bool
+    upKeyDownCallback: Function
+    downKeyDownCallback: Function
     constructor(){
         this.isCtrlPressed = false;
+        this.isUpPressed = false;
+        this.isDownPressed = false;
+        this.currentSelectedNode = null;
         this.init();
     }
     setAllKeysToFalse(){
         this.isCtrlPressed = false;
+        this.isUpPressed = false;
+        this.isDownPressed = false;
+        this.upKeyDownCallback = function(){
+            
+        }
+        this.downKeyDownCallback = function(){
+            
+        }
     }
     init(){
         $(document).keydown(
             (event) => {
-                this.setAllKeysToFalse();
-                if ( event.which == 17 ) {
-                    this.isCtrlPressed = true;
+                switch ( event.which ) {
+                    case 17:
+                        this.isCtrlPressed = true;
+                        break;
+                    case 38:
+                        this.isUpPressed = true;
+                        this.upKeyDownCallback();
+                        break;
+                    case 40:
+                        this.isDownPressed = true;
+                        this.downKeyDownCallback();
+                        break;
                 }
             }
         );
         $(document).keyup(
             (event) => {
-                this.setAllKeysToFalse();
+                if (this.isCtrlPressed && event.which !== 17){ // if Ctrl is Pressed
+                    
+                } else {
+                    this.setAllKeysToFalse();    
+                }
             }
         )
     }
     getIsCtrlPressed(){
         return this.isCtrlPressed;
+    }
+    getIsUpPressed(){
+        return this.isUpPressed;
+    }
+    getIsDownPressed(){
+        return this.isDownPressed;
+    }
+    setCurrentSelectedNode(currentSelectedNode:HierarchyNode){
+        this.currentSelectedNode = currentSelectedNode;
+    }
+    getCurrentSelectedNode(){
+        return this.currentSelectedNode;
+    }
+    setUpKeyDownCallback(callback:Function){
+        this.upKeyDownCallback = callback;
+    }
+    setDownKeyDownCallback(callback:Function){
+        this.downKeyDownCallback = callback;    
     }
 }
 
