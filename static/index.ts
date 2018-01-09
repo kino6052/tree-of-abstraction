@@ -18,6 +18,17 @@ let toLowerSerpent = function(input: String){
     return input.toLowerCase().split(" ").join("-");
 }
 
+let moveArrayElement = function(array: Array, oldIndex: number, down: boolean){
+    let resultArray = [];
+    let resultObject = [];
+    let arrayLength = array.length;
+    let oldIndex = (arrayLength + oldIndex)%arrayLength; // Case of Negative Indices and Indices Greater than Array Last Index
+    let newIndex = (arrayLength + oldIndex + (down?1:-1))%arrayLength;
+    let splice = array.splice(oldIndex, 1);
+    array.splice(newIndex, 0, splice[0]);
+    return [oldIndex, newIndex];
+}
+
 let generateUniqueHashId = function(){
     return Math.random().toString(16).replace(".", "") + new Date().getTime().toString(16);
 }
@@ -67,7 +78,7 @@ class HierarchyController {
         this.hierarchyModel.removeNoteId(noteNodeId, this);
         this.display();
     }
-    changeParent(newParentNode:HierarchyNode, childNode:HierarchyNode){
+    changeParent(newParentNode:HierarchyNode, childNode:HierarchyNode){ // TODO: Move to Model
         // Remove Child Node from Old Parent
         let parentNode = this.findParentNode(childNode);
         if (parentNode){
@@ -86,6 +97,12 @@ class HierarchyController {
             }
         });
         newParentNode.children.unshift(childNode);
+    }
+    moveChildDown(childNode:HierarchyNode, parentNode:HierarchyNode){
+        this.hierarchyModel.moveChildDown(childNode, parentNode);
+    }
+    moveChildUp(childNode:HierarchyNode, parentNode:HierarchyNode){
+        this.hierarchyModel.moveChildUp(childNode, parentNode);
     }
     // Display
     display(){
@@ -136,7 +153,9 @@ class HierarchyController {
 }
 
 class HierarchyModel {
+    // Private Fields
     hierarchyRoot: HierarchyNode
+    // Constructor
     constructor(hierarchy: Object){
         if (hierarchy.hasOwnProperty("name")){
             this.hierarchyRoot = this.buildHierarchyFromObject(hierarchy, new HierarchyNode(hierarchy.name, []));
@@ -144,9 +163,11 @@ class HierarchyModel {
             return;
         }
     }
+    // Export
     getHierarchyModelAsObject(){
         return this;
     }
+    // Import
     buildHierarchyFromObject(hierarchy: Object, currentNode: HierarchyNode){
         let childNode = null;
         if (hierarchy.hasOwnProperty("name")){
@@ -171,6 +192,7 @@ class HierarchyModel {
             return null;
         }
     }
+    // Search
     iterate(currentNode: HierarchyNode, callback: Function, indentAmount: Number){
         if (currentNode){
             callback(currentNode, indentAmount);
@@ -180,26 +202,6 @@ class HierarchyModel {
             }
         } else {
             return
-        }
-    }
-    toggleNode(node: HierarchyNode){
-        for (let childNode of node.children){
-            childNode.visible = !childNode.visible;
-            this.toggleNode(childNode);
-        }
-    }
-    hideChildren(parent: HierarchyNode){
-        for (let childNode of parent.children){
-            childNode.visible = false;
-            this.hideChildren(childNode);
-        }
-    }
-    showChildren(parent: HierarchyNode){
-        for (let childNode of parent.children){
-            if (!parent.collapsed && parent.visible) {
-                childNode.visible = true;
-            }
-            this.showChildren(childNode);
         }
     }
     findNode(currentNode: HierarchyNode, nodeId: String){
@@ -230,59 +232,6 @@ class HierarchyModel {
             }
         }
         return resultNode;
-    }
-    removeNode(currentNode: HierarchyNode, nodeId: String){
-        let recurseRemoveNode = function(parentNode, childNode, nodeId){
-            if (parentNode){
-                if (childNode){
-                    if (childNode.id === nodeId){
-                        parentNode.children = parentNode.children.filter((el)=>{
-                           if (el.id !== nodeId){
-                               return el;
-                           }
-                        });
-                    } else {
-                        for (let child of childNode.children){
-                            recurseRemoveNode(childNode, child, nodeId);
-                        }
-                    }
-                }
-            } else {
-                for (let child of parentNode.children){
-                    recurseRemoveNode(childNode, child, nodeId);
-                } 
-            }
-        }
-        if (currentNode.id === nodeId) {
-            return; // Don't Delete ROOT
-        } else {
-            for (let child of currentNode.children){
-                recurseRemoveNode(currentNode, child, nodeId);
-            }
-        }
-    }
-    add(newNode:HierarchyNode, nodeId:String){
-        let node = this.findNode(this.hierarchyRoot, nodeId);
-        node.children.unshift(newNode);
-    }
-    remove(nodeId:String){
-        let node = this.removeNode(this.hierarchyRoot, nodeId);
-    }
-    collapseNode(nodeId: String){
-        let nodeToCollapse = this.findNode(this.hierarchyRoot, nodeId);
-        nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
-        if (nodeToCollapse.collapsed){
-            this.hideChildren(nodeToCollapse);
-        } else {
-            this.showChildren(nodeToCollapse);
-        }
-    }
-    updateNodeName(nodeId:String, newNodeName:String){
-        let node = this.findNode(this.hierarchyRoot, nodeId);
-        node.name = newNodeName;
-    }
-    containsSubstring(str:String, substr:String){
-        return str.toLowerCase().indexOf(substr.toLowerCase()) !== -1;
     }
     findAsList(nameSubstring:String){
         let result = [];
@@ -326,6 +275,104 @@ class HierarchyModel {
             callback(child, currentNode);
         }
     }
+    // Update
+    toggleNode(node: HierarchyNode){
+        for (let childNode of node.children){
+            childNode.visible = !childNode.visible;
+            this.toggleNode(childNode);
+        }
+    }
+    hideChildren(parent: HierarchyNode){
+        for (let childNode of parent.children){
+            childNode.visible = false;
+            this.hideChildren(childNode);
+        }
+    }
+    showChildren(parent: HierarchyNode){
+        for (let childNode of parent.children){
+            if (!parent.collapsed && parent.visible) {
+                childNode.visible = true;
+            }
+            this.showChildren(childNode);
+        }
+    }
+    collapseNode(nodeId: String){
+        let nodeToCollapse = this.findNode(this.hierarchyRoot, nodeId);
+        nodeToCollapse.collapsed = !nodeToCollapse.collapsed;
+        if (nodeToCollapse.collapsed){
+            this.hideChildren(nodeToCollapse);
+        } else {
+            this.showChildren(nodeToCollapse);
+        }
+    }
+    updateNodeName(nodeId:String, newNodeName:String){
+        let node = this.findNode(this.hierarchyRoot, nodeId);
+        node.name = newNodeName;
+    }
+    moveChildDown(childNode:HierarchyNode, parentNode:HierarchyNode){
+        let index = 0;
+        let found = false;
+        parentNode.children.filter((node)=>{
+            if (node.id === childNode.id){
+                found = true;
+            }
+            if (!found) {
+                index++;
+            }
+        });
+        if (found){
+            moveArrayElement(parentNode.children, index, true);
+        }
+    }
+    moveChildUp(childNode:HierarchyNode, parentNode:HierarchyNode){
+        let index = 0;
+        let found = false;
+        parentNode.children.filter((node)=>{
+            if (!found) {
+                index++;
+            }
+            if (node.id === childNode.id){
+                found = true;
+            }
+        });
+        if (found){
+            moveArrayElement(parentNode.children, index, false);
+        }
+    }
+    // Remove
+    remove(nodeId:String){
+        let node = this.removeNode(this.hierarchyRoot, nodeId);
+    }
+    removeNode(currentNode: HierarchyNode, nodeId: String){
+        let recurseRemoveNode = function(parentNode, childNode, nodeId){
+            if (parentNode){
+                if (childNode){
+                    if (childNode.id === nodeId){
+                        parentNode.children = parentNode.children.filter((el)=>{
+                           if (el.id !== nodeId){
+                               return el;
+                           }
+                        });
+                    } else {
+                        for (let child of childNode.children){
+                            recurseRemoveNode(childNode, child, nodeId);
+                        }
+                    }
+                }
+            } else {
+                for (let child of parentNode.children){
+                    recurseRemoveNode(childNode, child, nodeId);
+                } 
+            }
+        }
+        if (currentNode.id === nodeId) {
+            return; // Don't Delete ROOT
+        } else {
+            for (let child of currentNode.children){
+                recurseRemoveNode(currentNode, child, nodeId);
+            }
+        }
+    }
     removeNoteId(noteId:String, hierarchyController:HierarchyController){
         let isFound = false;
         if (noteId){
@@ -340,6 +387,16 @@ class HierarchyModel {
             }, 0);   
         }
     }
+    // Create
+    add(newNode:HierarchyNode, nodeId:String){
+        let node = this.findNode(this.hierarchyRoot, nodeId);
+        node.children.unshift(newNode);
+    }
+    // AUX
+    containsSubstring(str:String, substr:String){
+        return str.toLowerCase().indexOf(substr.toLowerCase()) !== -1;
+    }
+
 }
 
 class HierarchyView {
@@ -1326,6 +1383,39 @@ exports.HIERARCHY_CONTROLLER_ChangeParent = function(test){ // NOTE: It is very 
     test.done();
 }
 
+exports.HIERARCHY_CONTROLLER_MoveChildUpOrDown = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
+    let id = generateUniqueHashId();
+    let hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    let hierarchyView = new HierarchyView($(""));
+    let hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    let node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    let node003 = new HierarchyNode("Test", []);
+    let node004 = new HierarchyNode("node004", []);
+    let node005 = new HierarchyNode("node005", []);
+    hierarchyController.add(node003, node002.id);
+    hierarchyController.add(node004, node002.id);
+    hierarchyController.add(node005, node002.id);
+    console.log(node002);
+    // ["node003", "node004", "node005"]
+    hierarchyController.moveChildUp(node004, node002);
+    // ["node004", "node003", "node005"]
+    console.log(node002);
+    test.equals(node004.id, node002.children[2].id);
+    test.equals(node003.id, node002.children[1].id);
+    hierarchyController.moveChildDown(node003, node002);
+    console.log(node002);
+    // ["node003", "node004", "node005"]
+    test.equals(node003.id, node002.children[2].id);
+    test.done();
+}
+
 exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function(test){ // NOTE: It is very important to not depend on MODEL function implementations, as their implementation may always change, but to depend on CONTROLLER's ones.
     let id = generateUniqueHashId();
     let hierarchyModel = new HierarchyModel({
@@ -1446,3 +1536,24 @@ exports.HIERARCHY_AUX_ToLowerSerpentTest = function(test) {
     test.equals("c--c--c", result); // Should It Be Like This?
     test.done();
 };
+
+exports.HIERARCHY_AUX_MoveArrayElement = function(test){
+    let array = [1, 2];
+    let result = moveArrayElement(array, 0, true);
+    test.deepEqual([0, 1], result);
+    test.deepEqual([2,1], array);
+    array = [1, 2];
+    result = moveArrayElement(array, 1, true);
+    test.deepEqual([1, 0], result);
+    test.deepEqual([2,1], array);
+    array = [1, 2, 3];
+    moveArrayElement(array, 0, false);
+    test.deepEqual([2,3,1], array);
+    array = [1, 2, 3];
+    moveArrayElement(array, 1, false);
+    test.deepEqual([2,1,3], array);
+    array = [1, 2, 3];
+    moveArrayElement(array, 1, true);
+    test.deepEqual([1,3,2], array);
+    test.done();
+}
