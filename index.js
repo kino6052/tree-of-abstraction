@@ -7,7 +7,8 @@ const jsonParser = bodyParser.json();
 app.listen(process.env.PORT);
 app.use(bodyParser.urlencoded({
     extended: true,
-    limit: '50mb'
+    limit: '50mb',
+    parameterLimit: 1000000
 }));
 app.use('/', express.static('static'));
 app.use('/dependencies', express.static('bower_components'));
