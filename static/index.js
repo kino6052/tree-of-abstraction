@@ -52,6 +52,7 @@ var HierarchyController = (function () {
         this.display();
     };
     HierarchyController.prototype.remove = function (nodeId) {
+        console.warn("Removed Hierarchy Node");
         this.hierarchyModel.remove(nodeId, String);
         this.noteMenuController.removeLabel(nodeId);
         this.display();
@@ -93,12 +94,10 @@ var HierarchyController = (function () {
         newParentNode.children.unshift(childNode);
     };
     HierarchyController.prototype.moveChildDown = function (childNode, parentNode) {
-        console.log("down");
         this.hierarchyModel.moveChildDown(childNode, parentNode);
         this.display();
     };
     HierarchyController.prototype.moveChildUp = function (childNode, parentNode) {
-        console.log("up");
         this.hierarchyModel.moveChildUp(childNode, parentNode);
         this.display();
     };
@@ -245,7 +244,6 @@ var HierarchyModel = (function () {
             else {
                 var candidate = this.findParentNode(childNode, nodeId);
                 if (candidate) {
-                    console.log(candidate);
                     resultNode = candidate;
                 }
             }
@@ -524,7 +522,6 @@ var HierarchyView = (function () {
             var parentNodeId = $node.closest("li").parent().prev().find(".node").attr("id");
             var parentNode = hierarchyController.find(parentNodeId);
             if (hierarchyController.isCtrlPressed()) {
-                console.log("test");
                 hierarchyController.upKeyDownCallback(function () {
                     hierarchyController.moveChildUp(node, parentNode);
                 });
@@ -642,6 +639,7 @@ var NoteMenuController = (function () {
         this.display();
     };
     NoteMenuController.prototype.remove = function (nodeId) {
+        console.warn("Removed Note");
         this.noteMenuModel.remove(nodeId, String);
         this.hierarchyController.removeNoteId(nodeId);
         this.display();
@@ -1434,15 +1432,12 @@ exports.HIERARCHY_CONTROLLER_MoveChildUpOrDown = function (test) {
     hierarchyController.add(node003, node002.id);
     hierarchyController.add(node004, node002.id);
     hierarchyController.add(node005, node002.id);
-    console.log(node002);
     // ["node003", "node004", "node005"]
     hierarchyController.moveChildUp(node004, node002);
     // ["node004", "node003", "node005"]
-    console.log(node002);
     test.equals(node004.id, node002.children[2].id);
     test.equals(node003.id, node002.children[1].id);
     hierarchyController.moveChildDown(node003, node002);
-    console.log(node002);
     // ["node003", "node004", "node005"]
     test.equals(node003.id, node002.children[2].id);
     test.done();
