@@ -4,13 +4,27 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 // Globals
-var $ = $ || function () {
+var document = document || {};
+var $ = $ || function (object) {
     return {
+        hitCtrl: function () {
+            object.keydownCallback({ which: 17 });
+        },
+        hitB: function () {
+            object.keydownCallback({ which: 66 });
+        },
         html: function () {
             return;
         },
         on: function () {
             return;
+        },
+        keydown: function (callback, key) {
+            if (typeof callback === "function") {
+                object.keydownCallback = callback;
+            }
+        },
+        keyup: function () {
         }
     };
 };
@@ -101,6 +115,10 @@ var HierarchyController = (function () {
         this.hierarchyModel.moveChildUp(childNode, parentNode);
         this.display();
     };
+    HierarchyController.prototype.toggleLabel = function (label, node) {
+        var labelString = typeof label !== 'number' ? "" : Label[label];
+        this.hierarchyModel.toggleLabel(labelString, node, HierarchyNode);
+    };
     // Display
     HierarchyController.prototype.display = function () {
         this.hierarchyView.display(this);
@@ -164,6 +182,12 @@ var HierarchyController = (function () {
     };
     HierarchyController.prototype.downKeyDownCallback = function (callback) {
         this.shortcutController.setDownKeyDownCallback(callback);
+    };
+    HierarchyController.prototype.ctrlBCallback = function (callback) {
+        this.shortcutController.setCtrlBCallback(callback);
+    };
+    HierarchyController.prototype.ctrlCCallback = function (callback) {
+        this.shortcutController.setCtrlCCallback(callback);
     };
     return HierarchyController;
 }());
@@ -303,6 +327,15 @@ var HierarchyModel = (function () {
             var childNode = _a[_i];
             childNode.visible = !childNode.visible;
             this.toggleNode(childNode);
+        }
+    };
+    HierarchyModel.prototype.toggleLabel = function (label, node) {
+        console.log(label, node);
+        if (node.label === label) {
+            node.label = "";
+        }
+        else {
+            node.label = label;
         }
     };
     HierarchyModel.prototype.hideChildren = function (parent) {
@@ -478,7 +511,7 @@ var HierarchyView = (function () {
     };
     HierarchyView.prototype.displayNodeHTML = function (node) {
         if (node.visible) {
-            return this.generateNodeListElement(node.id, node.name);
+            return this.generateNodeListElement(node);
         }
         else {
             return "";
@@ -487,12 +520,12 @@ var HierarchyView = (function () {
     HierarchyView.prototype.generateNodeStyle = function () {
         return "style='width: 200px;'";
     };
-    HierarchyView.prototype.generateNodeListElement = function (nodeId, nodeName) {
+    HierarchyView.prototype.generateNodeListElement = function (node) {
         return "" +
             "<li " + this.generateNodeStyle() + ">" +
-            "<div class='node' id='" + nodeId + "'>" +
+            "<div class='node " + node.label + "' id='" + node.id + "'>" +
             "<span class='node-name' " + this.generateNodeNameStyle() + ">" +
-            nodeName +
+            node.name +
             "</span>" +
             this.generateNodeButtons() +
             "</div>" +
@@ -518,9 +551,15 @@ var HierarchyView = (function () {
             var $node = $(e1.currentTarget);
             var nodeId = $node.parent(".node").attr("id");
             var node = hierarchyController.find(nodeId);
-            hierarchyController.setCurrentSelectedNode(node);
             var parentNodeId = $node.closest("li").parent().prev().find(".node").attr("id");
             var parentNode = hierarchyController.find(parentNodeId);
+            hierarchyController.setCurrentSelectedNode(node);
+            hierarchyController.ctrlBCallback(function () {
+                hierarchyController.toggleLabel(Label.BOOK, node);
+            });
+            hierarchyController.ctrlCCallback(function () {
+                hierarchyController.toggleLabel(Label.CATEGORY, node);
+            });
             if (hierarchyController.isCtrlPressed()) {
                 hierarchyController.upKeyDownCallback(function () {
                     hierarchyController.moveChildUp(node, parentNode);
@@ -591,6 +630,11 @@ var HierarchyView = (function () {
     };
     return HierarchyView;
 }());
+var Label;
+(function (Label) {
+    Label[Label["BOOK"] = 0] = "BOOK";
+    Label[Label["CATEGORY"] = 1] = "CATEGORY";
+})(Label || (Label = {}));
 var HierarchyNode = (function (_super) {
     __extends(HierarchyNode, _super);
     function HierarchyNode(name, children) {
@@ -600,6 +644,7 @@ var HierarchyNode = (function (_super) {
         this.visible = true;
         this.collapsed = false;
         this.noteIds = [];
+        this.label = "";
     }
     return HierarchyNode;
 }(BaseNode));
@@ -968,9 +1013,14 @@ var ShortcutController = (function () {
         };
         this.downKeyDownCallback = function () {
         };
+        this.ctrlBCallback = function () {
+        };
+        this.ctrlCCallback = function () {
+        };
     };
     ShortcutController.prototype.init = function () {
         var _this = this;
+        this.setAllKeysToFalse();
         $(document).keydown(function (event) {
             switch (event.which) {
                 case 17:
@@ -983,6 +1033,18 @@ var ShortcutController = (function () {
                 case 40:
                     _this.isDownPressed = true;
                     _this.downKeyDownCallback();
+                    break;
+                case 66:
+                    _this.isBPressed = true;
+                    if (_this.isCtrlPressed) {
+                        _this.ctrlBCallback();
+                    }
+                    break;
+                case 67:
+                    _this.idCPressed = true;
+                    if (_this.isCtrlPressed) {
+                        _this.ctrlCCallback();
+                    }
                     break;
             }
         });
@@ -1014,6 +1076,12 @@ var ShortcutController = (function () {
     };
     ShortcutController.prototype.setDownKeyDownCallback = function (callback) {
         this.downKeyDownCallback = callback;
+    };
+    ShortcutController.prototype.setCtrlBCallback = function (callback) {
+        this.ctrlBCallback = callback;
+    };
+    ShortcutController.prototype.setCtrlCCallback = function (callback) {
+        this.ctrlCCallback = callback;
     };
     return ShortcutController;
 }());
@@ -1062,6 +1130,17 @@ Promise.all([
     });
 });
 // Node Unit Tests
+exports.SHORTCUT_CONTROLLER_CtrlCallbacks = function (test) {
+    var shortcutController = new ShortcutController();
+    var isCtrlBPressed = false;
+    shortcutController.ctrlBCallback = function () {
+        isCtrlBPressed = true;
+    };
+    $(document).hitCtrl();
+    $(document).hitB();
+    test.equals(true, isCtrlBPressed);
+    test.done();
+};
 exports.NOTE_MENU_JsonToListTest = function (test) {
     var noteMenuModel = new NoteMenuModel([{
             name: "note001",
@@ -1432,14 +1511,14 @@ exports.HIERARCHY_CONTROLLER_MoveChildUpOrDown = function (test) {
     hierarchyController.add(node003, node002.id);
     hierarchyController.add(node004, node002.id);
     hierarchyController.add(node005, node002.id);
-    // ["node003", "node004", "node005"]
+    // ["node005", "node004", "node003"]
     hierarchyController.moveChildUp(node004, node002);
-    // ["node004", "node003", "node005"]
-    test.equals(node004.id, node002.children[2].id);
-    test.equals(node003.id, node002.children[1].id);
-    hierarchyController.moveChildDown(node003, node002);
-    // ["node003", "node004", "node005"]
+    // ["node004", "node005", "node003"]
+    test.equals(node004.id, node002.children[0].id);
     test.equals(node003.id, node002.children[2].id);
+    hierarchyController.moveChildDown(node003, node002);
+    // ["node003", "node005", "node004"]
+    test.equals(node003.id, node002.children[0].id);
     test.done();
 };
 exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function (test) {
@@ -1477,6 +1556,34 @@ exports.HIERARCHY_CONTROLLER_RemoveNoteIdFromNodeByRemovingNote = function (test
     test.equals(0, node002.noteIds.length);
     test.done();
 };
+exports.HIERARCHY_CONTROLLER_ToggleLabel = function (test) {
+    var id = generateUniqueHashId();
+    var hierarchyModel = new HierarchyModel({
+        name: "node001",
+        id: id,
+        collapsed: false,
+        visible: true,
+        children: []
+    });
+    var hierarchyView = new HierarchyView($(""));
+    var hierarchyController = new HierarchyController(hierarchyModel, hierarchyView);
+    var node002 = new HierarchyNode("node002", []);
+    hierarchyController.add(node002, hierarchyModel.hierarchyRoot.id);
+    console.log(node002);
+    hierarchyController.toggleLabel(Label.BOOK, node002);
+    test.equals(node002.label, "BOOK");
+    hierarchyController.toggleLabel(Label.BOOK, node002);
+    test.equals(node002.label, "");
+    hierarchyController.toggleLabel(Label.CATEGORY, node002);
+    test.equals(node002.label, "CATEGORY");
+    hierarchyController.toggleLabel(Label.BOOK, node002);
+    test.equals(node002.label, "BOOK");
+    hierarchyController.toggleLabel("test", node002);
+    test.equals(node002.label, "");
+    hierarchyController.toggleLabel(function () { }, node002);
+    test.equals(node002.label, "");
+    test.done();
+};
 exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function (test) {
     var nodeId001 = "";
     var nodeId002 = "";
@@ -1494,16 +1601,16 @@ exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function (test) {
     var hierarchyView = new HierarchyView($());
     html = "" +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId001, "node001") +
+        hierarchyView.generateNodeListElement(hierarchyModel.hierarchyRoot) +
         "</ul>";
     test.equals(html, hierarchyView.displayHierarchyModelHTML(hierarchyModel));
     var node002 = new HierarchyNode("node002", []);
     nodeId002 = node002.id;
     hierarchyModel.add(node002, nodeId001);
     html = "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId001, "node001") +
+        hierarchyView.generateNodeListElement(hierarchyModel.hierarchyRoot) +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId002, "node002") +
+        hierarchyView.generateNodeListElement(node002) +
         "</ul>" +
         "</ul>";
     test.equals(html, hierarchyView.displayHierarchyModelHTML(hierarchyModel));
@@ -1511,11 +1618,11 @@ exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function (test) {
     nodeId003 = node003.id;
     hierarchyModel.add(node003, nodeId002);
     html = "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId001, "node001") +
+        hierarchyView.generateNodeListElement(hierarchyModel.hierarchyRoot) +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId002, "node002") +
+        hierarchyView.generateNodeListElement(node002) +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId003, "node003") +
+        hierarchyView.generateNodeListElement(node003) +
         "</ul>" +
         "</ul>" +
         "</ul>";
@@ -1524,23 +1631,23 @@ exports.HIERARCHY_VIEW_JsonToDOMTreeTest = function (test) {
     nodeId004 = node004.id;
     hierarchyModel.add(node004, nodeId001);
     html = "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId001, "node001") +
+        hierarchyView.generateNodeListElement(hierarchyModel.hierarchyRoot) +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId004, "node004") +
-        hierarchyView.generateNodeListElement(nodeId002, "node002") +
+        hierarchyView.generateNodeListElement(node004) +
+        hierarchyView.generateNodeListElement(node002) +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId003, "node003") +
+        hierarchyView.generateNodeListElement(node003) +
         "</ul>" +
         "</ul>" +
         "</ul>";
     test.equals(html, hierarchyView.displayHierarchyModelHTML(hierarchyModel));
     hierarchyModel.remove(nodeId004);
     html = "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId001, "node001") +
+        hierarchyView.generateNodeListElement(hierarchyModel.hierarchyRoot) +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId002, "node002") +
+        hierarchyView.generateNodeListElement(node002) +
         "<ul>" +
-        hierarchyView.generateNodeListElement(nodeId003, "node003") +
+        hierarchyView.generateNodeListElement(node003) +
         "</ul>" +
         "</ul>" +
         "</ul>";
