@@ -69,7 +69,11 @@
             ::-webkit-scrollbar { 
                 display: none; 
             }
-            .area#bookshelf-area .shelf::before {
+            .area#bookshelf-area .shelf {
+                background-color: rgba(255, 255, 255, 0.25);
+            }
+            .area#bookshelf-area .shelf::before, 
+            .area#bookshelf-area .shelf::after {
                 display: block;
                 position: relative;
                 content: " ";
@@ -80,13 +84,11 @@
                 background-image: url("/shelf.jpg");
                 box-shadow: 0 0 4px;
             }
+            .area#bookshelf-area .shelf::before {
+                content: "Open";
+            }
             .area#bookshelf-area .shelf::after {
-                display: block;
-                position: relative;
-                content: " ";
-                margin-top: 2px;
-                width: 100%;
-                border: 2px dashed red;
+                content: "Close";
             }
             .area#bookshelf-area .category {
                 position: relative;
@@ -173,45 +175,30 @@
             <div id="notes-area" class="area"></div>
             <div id="hierarchy-area" class="area"></div>
             <div id="bookshelf-area" class="area">
-                <div class="category">
-                    <h1>Church History</h1>
-                </div>
                 <div class="shelf">
                     <div class="category">
-                        <h1>First Period</h1>
+                        <h1>Church History</h1>
                     </div>
-                    <ul>
-                        <li>
-                            <div class="book-title">
-                                <h2>Book 001</h2>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="book-title">
-                                <h2>Book 001</h2>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                <div class="shelf">
-                    <div class="category">
-                        <h1>Second Period</h1>
-                    </div>
-                    <ul>
-                        <li>
-                            <div class="book-title">
-                                <h2>Tertulian</h2>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="book-title">
-                                <h2>Resolving deltas: 100% (2/2), completed with 2 local objects.</h2>
-                            </div>
-                        </li>
-                    </ul>
                     <div class="shelf">
                         <div class="category">
-                            <h1>Reformation</h1>
+                            <h1>First Period</h1>
+                        </div>
+                        <ul>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="shelf">
+                        <div class="category">
+                            <h1>Second Period</h1>
                         </div>
                         <ul>
                             <li>
@@ -224,87 +211,104 @@
                                     <h2>Resolving deltas: 100% (2/2), completed with 2 local objects.</h2>
                                 </div>
                             </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="book-title">
-                                    <h2>Book 001</h2>
-                                </div>
-                            </li>
                         </ul>
+                        <div class="shelf">
+                            <div class="category">
+                                <h1>Reformation</h1>
+                            </div>
+                            <ul>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Tertulian</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Resolving deltas: 100% (2/2), completed with 2 local objects.</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="book-title">
+                                        <h2>Book 001</h2>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
