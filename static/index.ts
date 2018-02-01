@@ -1156,6 +1156,14 @@ Promise.all(
         )
         console.log("Saving");
     }); 
+    $("#application-menu-bookshelf").on("click", ()=>{
+       $("#bookshelf-area").css({visibility: "visible"}); 
+    });
+    $("#application-menu-hierarchy").on("click", ()=>{
+        hierarchyController.display();
+        noteMenuController.display();
+        $("#bookshelf-area").css({visibility: "hidden"}); 
+    });
 });
 
 

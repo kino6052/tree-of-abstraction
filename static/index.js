@@ -1128,6 +1128,14 @@ Promise.all([
         });
         console.log("Saving");
     });
+    $("#application-menu-bookshelf").on("click", function () {
+        $("#bookshelf-area").css({ visibility: "visible" });
+    });
+    $("#application-menu-hierarchy").on("click", function () {
+        hierarchyController.display();
+        noteMenuController.display();
+        $("#bookshelf-area").css({ visibility: "hidden" });
+    });
 });
 // Node Unit Tests
 exports.SHORTCUT_CONTROLLER_CtrlCallbacks = function (test) {

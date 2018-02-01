@@ -1,13 +1,28 @@
 <html>
     <head>
         <style>
+            body {
+                padding: 0;
+                margin: 0;
+            }
             #application-body {
+                position: absolute;
+                top: 5%;
                 height: 95%;
                 width: 100%;
             }
             #application-menu {
+                position: absolute;
+                top: 0;
                 width: 100%;
                 height: 5%;
+                z-index: 999;
+            }
+            #application-menu-persistence {
+                float: left;
+            }
+            #application-menu-display {
+                float: right;
             }
             .area {
                 height: 100%;
@@ -24,6 +39,67 @@
                 width: 100%;
                 min-height: 50%;
                 resize: none;
+            }
+            .area#bookshelf-area {
+                position: fixed;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: brown;
+                visibility: hidden;
+                z-index: 1;
+                text-align: center;
+            }
+            .area#bookshelf-area ul, .area#bookshelf-area li {
+                margin: 0;
+                padding: 0;
+                position: relative;
+            }
+            .area#bookshelf-area ul {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: scroll;
+                overflow-y: hidden;
+                width: 100%;
+                height: 400px;
+            }
+            ::-webkit-scrollbar { 
+                display: none; 
+            }
+            .area#bookshelf-area .shelf::after {
+                display: block;
+                content: "test";
+                width: 100%;
+                height: 20px;
+                background-color: black;
+            }
+            .area#bookshelf-area span {
+                width: 100%;
+                height: 40px;
+                margin: auto;
+                background-color: gold;
+                text-align: center;
+            }
+            .area#bookshelf-area li {
+                display: flex;
+                white-space: nowrap;
+                height: 400px;
+                background-color: green;
+                float: left;
+                margin: 2px;
+                background-image: url("/book.jpg");
+                background-position: 50% 50%;
+                box-shadow: 2px 2px 2px;
+            }
+            .area#bookshelf-area li .book-title {
+                height: 400px;
+                width: 100px;
+                text-align: center;
+            }
+            .area#bookshelf-area li .book-title h1 {
+                transform: rotate(90deg);
+                text-align: center;
+                padding-left: 100px;
             }
             .node.BOOK {
                 font-style: italic;
@@ -52,11 +128,58 @@
     </head>
     <body>
         <div id="application-menu">
-            <button id="application-menu-save">Save</button>
+            <div id="application-menu-persistence">
+                <button id="application-menu-save">Save</button>                
+            </div>
+            <div id="application-menu-display">
+                <button id="application-menu-bookshelf">Shelf</button>
+                <button id="application-menu-hierarchy">Hierarchy</button>
+            </div>  
         </div>
         <div id="application-body">
             <div id="notes-area" class="area"></div>
             <div id="hierarchy-area" class="area"></div>
+            <div id="bookshelf-area" class="area">
+                <span>Category Super</span>
+                <div class="shelf">
+                    <span>Category Sub</span>
+                    <ul>
+                        <li>
+                            <div class="book-title">
+                                <h1>Book 001</h1>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="book-title">
+                                <h1>Book 001</h1>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="shelf">
+                    <span>Category Sub</span>
+                    <div class="shelf">
+                        <span>Category Sub Sub</span>
+                        <ul>
+                            <li>
+                                <div class="book-title">
+                                    <h1>Book 001</h1>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h1>Book 001</h1>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h1>Book 001</h1>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
         <script src="/dependencies/jquery/dist/jquery.min.js"></script>
         <script src="index.js"></script>
