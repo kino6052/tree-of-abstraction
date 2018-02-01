@@ -69,7 +69,7 @@
             ::-webkit-scrollbar { 
                 display: none; 
             }
-            .area#bookshelf-area .shelf::after {
+            .area#bookshelf-area .shelf::before {
                 display: block;
                 content: " ";
                 width: 100%;
@@ -91,6 +91,7 @@
                 background-color: gold;
                 text-align: center;
                 box-shadow: 0 0 4px;
+                margin: 20px auto 20px;
             }
             .area#bookshelf-area .category h1 {
                 position: relative;
@@ -163,10 +164,12 @@
             <div id="notes-area" class="area"></div>
             <div id="hierarchy-area" class="area"></div>
             <div id="bookshelf-area" class="area">
-                <span>Category Super</span>
+                <div class="category">
+                    <h1>Church History</h1>
+                </div>
                 <div class="shelf">
                     <div class="category">
-                        <h1>Category Sub</h1>
+                        <h1>First Period</h1>
                     </div>
                     <ul>
                         <li>
@@ -183,21 +186,33 @@
                 </div>
                 <div class="shelf">
                     <div class="category">
-                        <h1>Category Sub</h1>
+                        <h1>Second Period</h1>
                     </div>
+                    <ul>
+                        <li>
+                            <div class="book-title">
+                                <h2>Tertulian</h2>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="book-title">
+                                <h2>Resolving deltas: 100% (2/2), completed with 2 local objects.</h2>
+                            </div>
+                        </li>
+                    </ul>
                     <div class="shelf">
                         <div class="category">
-                            <h1>Category Sub</h1>
+                            <h1>Reformation</h1>
                         </div>
                         <ul>
                             <li>
                                 <div class="book-title">
-                                    <h2>Book 001</h2>
+                                    <h2>Tertulian</h2>
                                 </div>
                             </li>
                             <li>
                                 <div class="book-title">
-                                    <h2>Book 001</h2>
+                                    <h2>Resolving deltas: 100% (2/2), completed with 2 local objects.</h2>
                                 </div>
                             </li>
                             <li>
