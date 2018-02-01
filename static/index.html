@@ -1,6 +1,7 @@
 <html>
     <head>
         <style>
+            @import url('https://fonts.googleapis.com/css?family=Fredericka+the+Great');
             body {
                 padding: 0;
                 margin: 0;
@@ -46,9 +47,11 @@
                 width: 100%;
                 height: 100%;
                 background-color: brown;
+                background-image: url("/background.jpg");
                 visibility: hidden;
                 z-index: 1;
                 text-align: center;
+                font-family: 'Fredericka the Great', cursive;
             }
             .area#bookshelf-area ul, .area#bookshelf-area li {
                 margin: 0;
@@ -68,17 +71,35 @@
             }
             .area#bookshelf-area .shelf::after {
                 display: block;
-                content: "test";
+                content: " ";
                 width: 100%;
                 height: 20px;
+                margin: 2px;
                 background-color: black;
+                background-image: url("/shelf.jpg");
+                box-shadow: 0 0 4px;
             }
-            .area#bookshelf-area span {
-                width: 100%;
-                height: 40px;
-                margin: auto;
+            .area#bookshelf-area .category {
+                position: relative;
+                width: 400px;
+                height: 100px;
+                margin: 4px auto 4px;
+                border: 1px solid rgba(255,255,255,0.5);
+                color: white;
+                background-image: url("/plaque.jpg");
+                background-position: 50% 50%;
                 background-color: gold;
                 text-align: center;
+                box-shadow: 0 0 4px;
+            }
+            .area#bookshelf-area .category h1 {
+                position: relative;
+                line-height: 100px;
+                margin: auto;
+                text-align: center;
+                color: rgba(10, 10, 10, 0.8);
+                text-shadow: 0px 0px 1px rgba(255,255,255,0.8);
+                text-shadow: 1px 1px 1px rgba(255,255,255,0.8);
             }
             .area#bookshelf-area li {
                 display: flex;
@@ -96,10 +117,12 @@
                 width: 100px;
                 text-align: center;
             }
-            .area#bookshelf-area li .book-title h1 {
+            .area#bookshelf-area li .book-title h2 {
                 transform: rotate(90deg);
                 text-align: center;
                 padding-left: 100px;
+                color: rgba(10, 10, 10, 0.8);
+                text-shadow: 1px 1px 1px rgba(255,255,255,0.3);
             }
             .node.BOOK {
                 font-style: italic;
@@ -142,38 +165,119 @@
             <div id="bookshelf-area" class="area">
                 <span>Category Super</span>
                 <div class="shelf">
-                    <span>Category Sub</span>
+                    <div class="category">
+                        <h1>Category Sub</h1>
+                    </div>
                     <ul>
                         <li>
                             <div class="book-title">
-                                <h1>Book 001</h1>
+                                <h2>Book 001</h2>
                             </div>
                         </li>
                         <li>
                             <div class="book-title">
-                                <h1>Book 001</h1>
+                                <h2>Book 001</h2>
                             </div>
                         </li>
                     </ul>
                 </div>
                 <div class="shelf">
-                    <span>Category Sub</span>
+                    <div class="category">
+                        <h1>Category Sub</h1>
+                    </div>
                     <div class="shelf">
-                        <span>Category Sub Sub</span>
+                        <div class="category">
+                            <h1>Category Sub</h1>
+                        </div>
                         <ul>
                             <li>
                                 <div class="book-title">
-                                    <h1>Book 001</h1>
+                                    <h2>Book 001</h2>
                                 </div>
                             </li>
                             <li>
                                 <div class="book-title">
-                                    <h1>Book 001</h1>
+                                    <h2>Book 001</h2>
                                 </div>
                             </li>
                             <li>
                                 <div class="book-title">
-                                    <h1>Book 001</h1>
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="book-title">
+                                    <h2>Book 001</h2>
                                 </div>
                             </li>
                         </ul>
