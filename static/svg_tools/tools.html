@@ -1,0 +1,49 @@
+<html>
+    <head>
+        
+    </head>
+    <body>
+        <script>
+            var convertToCurve = function(moveTo, coordinatesHandleLeft, coordinatesHandleRight, endCoordinates){
+                
+            };
+            var translateCurve = function(original, dx, dy){
+              var regex = /(\d{3}).+(\d{3}).+(\d{3}).+(\d{3}).+(\d{3}).+(\d{3}).+(\d{3}).+(\d{3})/g;
+              var match = regex.exec(original);
+              console.log(match);
+              var moveToX = Number(match[1]) + dx;
+              var moveToY = Number(match[2]) + dy;
+              var handleXLeft = Number(match[3]) + dx;
+              var handleYLeft = Number(match[4]) + dy;
+              var handleXRight = Number(match[5]) + dx;
+              var handleYRight = Number(match[6]) + dy;
+              var endX = Number(match[7]) + dx;
+              var endY = Number(match[8]) + dy;
+              return "" +
+                "M" + 
+                moveToX + 
+                " " + 
+                moveToY + 
+                "C " + 
+                handleXLeft + 
+                " " + 
+                handleYLeft + 
+                ", " + 
+                handleXRight + 
+                " " + 
+                handleYRight + 
+                ", " + 
+                endX + " " + 
+                endY 
+            };
+            var test = {
+                name: "Scene001",
+                objects: [
+                    {
+                        type: "rectangle",
+                    }
+                ]
+            }
+        </script>
+    </body>
+</html>
