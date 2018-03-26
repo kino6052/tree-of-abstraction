@@ -4,7 +4,9 @@ const express = require('express');
 const app = express();
 const jsonParser = bodyParser.json();
 
-app.listen(process.env.PORT);
+console.log(process.env.IP);
+console.log(process.env.PORT);
+app.listen(process.env.PORT || 3000);
 app.use(bodyParser.urlencoded({
     extended: true,
     limit: '50mb',

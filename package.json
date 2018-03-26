@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "Auxilary tool for learning and organization",
   "main": "index.js",
+  "config": {
+    "port": "8080"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
@@ -19,7 +23,8 @@
   "dependencies": {
     "body-parser": "^1.18.2",
     "express": "^4.16.2",
-    "fs": "0.0.1-security"
+    "fs": "0.0.1-security",
+    "jquery": "^3.3.1"
   },
   "devDependencies": {
     "@types/jquery": "^3.2.17"
